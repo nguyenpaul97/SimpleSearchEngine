@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import PorterStemmer
+import math
+import numpy as np
+from collections import Counter
 import re
 import string
 
@@ -12,7 +15,7 @@ class Indexer:
     def __init__(self):
         # Posting structure: {token: {doc index #: [tf, importance of token]
         self.posting_dict = dict()
-        self.doc_num = 0  # document numbering
+        self.doc_num = 0  # document numbering or N
 
         # https://stackoverflow.com/questions/15547409/how-to-get-rid-of-punctuation-using-nltk-tokenizer
         self.tokenizer = RegexpTokenizer(r'\w+')
@@ -39,6 +42,17 @@ class Indexer:
                         break
                 if count_num == 3:
                     break
+
+            for token in self.posting_dict:
+                print(token)
+                # print(self.posting_dict[token][1])
+                # print(self.posting_dict[token][2])
+                df = len(self.posting_dict[token])
+                for doc in self.posting_dict[token]:
+                    tf = self.posting_dict[token][doc][0]
+                    # Calculate tf-idf for that term inside of the document
+                    self.posting_dict[token][doc][2] = tf * math.log10(self.doc_count/df)
+
 
 
     def parse_html(self, doc_index, content):
@@ -71,9 +85,9 @@ class Indexer:
                 self.posting_dict[stemmed][doc_index][0] += 1
                 self.posting_dict[stemmed][doc_index][1] += importance
             else:
-                self.posting_dict[stemmed][doc_index] = [1, importance]
-        else:
-            self.posting_dict[stemmed] = {doc_index: [1, importance]}
+                self.posting_dict[stemmed][doc_index] = [1, importance, 0]
+        else: # list contains: frequency, weight, tf-idf score
+            self.posting_dict[stemmed] = {doc_index: [1, importance, 0]}
 
     '''
     find_all_text has a time complexity of O(N) because we are going through all the text.
