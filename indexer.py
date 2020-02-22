@@ -1,14 +1,17 @@
 import os
-import json
+import json as js
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import PorterStemmer
 import math
 import numpy as np
-from collections import Counter
+from collections import OrderedDict
 import re
 import string
+from eventlet.timeout import Timeout
+
+INDEX_SIZE = 7000
 
 class Indexer:
 
@@ -16,6 +19,7 @@ class Indexer:
         # Posting structure: {token: {doc index #: [tf, importance of token]
         self.posting_dict = dict()
         self.doc_num = 0  # document numbering or N
+        self.fileId = 1
 
         # https://stackoverflow.com/questions/15547409/how-to-get-rid-of-punctuation-using-nltk-tokenizer
         self.tokenizer = RegexpTokenizer(r'\w+')
@@ -35,29 +39,38 @@ class Indexer:
                     json_path = 'DEV/'+path+'/'+json_file
                     print(json_path)
                     with open(json_path, 'r') as jfile:
-                        data = json.load(jfile)
-                        self.parse_html(count_num, data['content'])
-                    count_num+=1
-                    if count_num == 3:
-                        break
-                if count_num == 3:
-                    break
-
-            for token in self.posting_dict:
-                print(token)
-                # print(self.posting_dict[token][1])
-                # print(self.posting_dict[token][2])
-                df = len(self.posting_dict[token])
-                for doc in self.posting_dict[token]:
-                    tf = self.posting_dict[token][doc][0]
-                    # Calculate tf-idf for that term inside of the document
-                    self.posting_dict[token][doc][2] = tf * math.log10(self.doc_count/df)
+                        with Timeout(5, False):
+                            data = js.load(jfile)
+                            self.parse_html(self.doc_num, data['content'])
+                    self.doc_num += 1
+                    if self.doc_num % INDEX_SIZE == 0:
+                        self.writeIndexToFile()
+                        self.fileId += 1
+            self.writeIndexToFile()
 
 
+    def writeIndexToFile(self):
+        print("writing index to file", self.fileId)
+        # for token in self.posting_dict:
+        #     #print(token)
+        #     # print(self.posting_dict[token][1])
+        #     # print(self.posting_dict[token][2])
+        #     df = len(self.posting_dict[token])
+        #     for doc in self.posting_dict[token]:
+        #         tf = self.posting_dict[token][doc][0]
+        #         # Calculate tf-idf for that term inside of the document
+        #         self.posting_dict[token][doc][2] = tf * math.log10(self.doc_count / df)
+
+        self.posting_dict = OrderedDict(sorted(self.posting_dict.items()))
+        json = js.dumps(self.posting_dict)
+        f = open("./FileOutput/dict" + str(self.fileId) + ".json", "w+")
+        f.write(json)
+        f.close()
+        self.posting_dict = dict()
 
     def parse_html(self, doc_index, content):
         soup = BeautifulSoup(content, "lxml")
-        print(doc_index)
+        #print(doc_index)
         for line in soup.find_all(["h1", "h2", "h3", "strong", "b"]):
             text = line.get_text()
             token_list = self.tokenizer.tokenize(text)
@@ -70,7 +83,7 @@ class Indexer:
             for token in tokens:
                 self.index_token(token, doc_index, 0)
 
-        print(self.posting_dict)
+        #print(self.posting_dict)
 
         self.doc_count += 1
 
