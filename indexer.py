@@ -11,7 +11,7 @@ import re
 from eventlet.timeout import Timeout
 
 
-INDEX_SIZE = 10
+INDEX_SIZE = 10000
 
 class Indexer:
 
@@ -49,7 +49,7 @@ class Indexer:
             print(self.doc_num)
             print(len(self.unique_count))
             with open("./FileOutput/report.txt", "w+") as f:
-                f.write("number of documents: "+str(self.doc_count)+"\n")
+                f.write("number of documents: "+str(self.doc_num)+"\n")
                 f.write("number of unique tokens: " + str(len(self.unique_count)))
 
         else:
@@ -158,20 +158,23 @@ class Indexer:
         return "".join(i for i in s if ord(i) < 128)
 
 def merge(file1, file2, writefile):
-    with open(writefile, "w+") as mergeFile:
+    with open(writefile, "w") as mergeFile:
         f1 = open(file1, "r")
         f2 = open(file2, "r")
         try:
             merged_list = []
             break_file = 0
+            l1 = []
+            l2 = []
             while True:
-                l1 = []
-                l2 = []
                 if len(l1) == 0:
                     line_f1 = f1.readline()
                     if line_f1 == "":
                         print("break line_f1")
                         break_file = 0
+                        if len(l2) != 0:
+                            mergeFile.write(str(l2[0]) + "\n")
+                            #merged_list.append(l2[0])
                         break
                     l1.append(eval(line_f1.strip()))
                 if len(l2) == 0:
@@ -179,17 +182,19 @@ def merge(file1, file2, writefile):
                     if line_f2 == "":
                         print("break line_f2")
                         break_file = 1
+                        if len(l1) != 0:
+                            mergeFile.write(str(l1[0]) + "\n")
+                            #merged_list.append(l1[0])
                         break
                     l2.append(eval(line_f2.strip()))
 
-                # print(l1)
-                # print(l2)
+                #print(len(l1))
+                #print(len(l2))
 
                 if list(l1[0].keys())[0] == list(l2[0].keys())[0]:
                     l1[0][next(iter(l1[0]))].update(l2[0][next(iter(l2[0]))])
                     #merged_list.append(l1[0])
                     mergeFile.write(str(l1[0]) + "\n")
-                    #merged_list.append(l1[0].update(l2[0]))
                     #print(l1[0].update(l2[0]))
                     l1.pop(0)
                     l2.pop(0)
@@ -207,7 +212,7 @@ def merge(file1, file2, writefile):
                     if line_f2 == "":
                         break
                     #merged_list.append((eval(line_f2.strip())))
-                    print("write f2")
+                    #print("write f2")
                     mergeFile.write(str(eval(line_f2.strip())) + "\n")
             elif break_file == 1:
                 while True:
@@ -215,10 +220,11 @@ def merge(file1, file2, writefile):
                     if line_f1 == "":
                         break
                     #merged_list.append((eval(line_f1.strip())))
-                    print("write f1")
+                    #print("write f1")
                     mergeFile.write(str(eval(line_f1.strip())) + "\n")
             f1.close()
             f2.close()
+            #print(len(merged_list))
             #for i in merged_list:
             #    print(i)
             #    mergeFile.write(str(i) + "\n")
@@ -229,8 +235,8 @@ def merge(file1, file2, writefile):
             #pass
 
 if __name__ == "__main__":
-    #indexer = Indexer()
-    #indexer.indexer_main()
+    indexer = Indexer()
+    indexer.indexer_main()
 
     #dict1 = open('./FileOutput/dict1.txt')
     #while True:
@@ -240,6 +246,9 @@ if __name__ == "__main__":
     merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
     merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
     merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
+    merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
+    merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+
 
     # with open("./FileOutput/mergedict.txt", "w+") as mergeFile:
     #     f1 = open("./FileOutput/dict1.txt", "r")
