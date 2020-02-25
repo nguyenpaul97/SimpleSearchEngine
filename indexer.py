@@ -8,8 +8,8 @@ import math
 import numpy as np
 from collections import OrderedDict
 import re
-import string
 from eventlet.timeout import Timeout
+
 
 INDEX_SIZE = 10
 
@@ -27,7 +27,7 @@ class Indexer:
 
         # for M1 report
         self.doc_count = 0
-        self.unique_count = 0
+        self.unique_count = set()
 
     def indexer_main(self):
         if os.path.exists('DEV'):
@@ -45,6 +45,13 @@ class Indexer:
                         self.writeIndexToFile()
                         self.fileId += 1
             self.writeIndexToFile()
+            print(self.doc_count)
+            print(self.doc_num)
+            print(len(self.unique_count))
+            with open("./FileOutput/report.txt", "w+") as f:
+                f.write("number of documents: "+str(self.doc_count)+"\n")
+                f.write("number of unique tokens: " + str(len(self.unique_count)))
+
         else:
             print("Please put DEV folder in the folder with this file.")
 
@@ -64,11 +71,13 @@ class Indexer:
 
 
         self.posting_dict = OrderedDict(sorted(self.posting_dict.items()))
-        json = js.dumps(self.posting_dict, ensure_ascii=False, indent=4)
+        #json = js.dumps(self.posting_dict)
         if not os.path.exists("./FileOutput"):
             os.mkdir("./FileOutput")
-        f = open("./FileOutput/dict" + str(self.fileId) + ".json", "w+")
-        f.write(json)
+        f = open("./FileOutput/dict" + str(self.fileId) + ".txt", "w+")
+        for key, value in self.posting_dict.items():
+            f.write('{"%s":%s}\n' % (key,value))
+        #f.write(json)
         f.close()
         self.posting_dict = dict()
 
@@ -82,13 +91,14 @@ class Indexer:
         #print(doc_index)
         for line in soup.find_all(["h1", "h2", "h3", "strong", "b"]):
             text = line.get_text()
+            text = self.removeNonAscii(text)
             token_list = self.tokenizer.tokenize(text)
-            #token_list = self.tokenize(text)
             for token in token_list:
                 self.index_token(token, doc_index, 2)
 
         all_text = self.find_all_text(soup)
         for words in all_text:
+            words = self.removeNonAscii(words)
             tokens = self.tokenizer.tokenize(words)
             #tokens = self.tokenize(words)
             for token in tokens:
@@ -112,6 +122,9 @@ class Indexer:
                 self.posting_dict[stemmed][doc_index] = [1, importance, 0]
         else: # list contains: frequency, weight, tf-idf score
             self.posting_dict[stemmed] = {doc_index: [1, importance, 0]}
+        if stemmed not in self.unique_count:
+            self.unique_count.add(stemmed)
+
 
     '''
     find_all_text has a time complexity of O(N) because we are going through all the text.
@@ -140,73 +153,149 @@ class Indexer:
                 return False
         return True
 
-    def tokenize(self, text_list):
-        tokenList = []
-        for line in text_list:
-            line = re.sub(r'[^\x00-\x7f]', r' ', line).lower()
-            line = line.translate(str.maketrans(string.punctuation, ' '*len(string.punctuation)))
-            tokenList.extend(line.split())
-        return tokenList
+    # https://stackoverflow.com/questions/1342000/how-to-make-the-python-interpreter-correctly-handle-non-ascii-characters-in-stri
+    def removeNonAscii(self, s):
+        return "".join(i for i in s if ord(i) < 128)
 
+def merge(file1, file2, writefile):
+    with open(writefile, "w+") as mergeFile:
+        f1 = open(file1, "r")
+        f2 = open(file2, "r")
+        try:
+            merged_list = []
+            break_file = 0
+            while True:
+                l1 = []
+                l2 = []
+                if len(l1) == 0:
+                    line_f1 = f1.readline()
+                    if line_f1 == "":
+                        print("break line_f1")
+                        break_file = 0
+                        break
+                    l1.append(eval(line_f1.strip()))
+                if len(l2) == 0:
+                    line_f2 = f2.readline()
+                    if line_f2 == "":
+                        print("break line_f2")
+                        break_file = 1
+                        break
+                    l2.append(eval(line_f2.strip()))
 
+                # print(l1)
+                # print(l2)
+
+                if list(l1[0].keys())[0] == list(l2[0].keys())[0]:
+                    l1[0][next(iter(l1[0]))].update(l2[0][next(iter(l2[0]))])
+                    #merged_list.append(l1[0])
+                    mergeFile.write(str(l1[0]) + "\n")
+                    #merged_list.append(l1[0].update(l2[0]))
+                    #print(l1[0].update(l2[0]))
+                    l1.pop(0)
+                    l2.pop(0)
+                elif list(l1[0].keys())[0] < list(l2[0].keys())[0]:
+                    #merged_list.append(l1[0])
+                    mergeFile.write(str(l1[0]) + "\n")
+                    l1.pop(0)
+                elif list(l1[0].keys())[0] > list(l2[0].keys())[0]:
+                    #merged_list.append(l2[0])
+                    mergeFile.write(str(l2[0]) + "\n")
+                    l2.pop(0)
+            if break_file == 0:
+                while True:
+                    line_f2 = f2.readline()
+                    if line_f2 == "":
+                        break
+                    #merged_list.append((eval(line_f2.strip())))
+                    print("write f2")
+                    mergeFile.write(str(eval(line_f2.strip())) + "\n")
+            elif break_file == 1:
+                while True:
+                    line_f1 = f1.readline()
+                    if line_f1 == "":
+                        break
+                    #merged_list.append((eval(line_f1.strip())))
+                    print("write f1")
+                    mergeFile.write(str(eval(line_f1.strip())) + "\n")
+            f1.close()
+            f2.close()
+            #for i in merged_list:
+            #    print(i)
+            #    mergeFile.write(str(i) + "\n")
+        except EOFError:
+            print("end of file")
+            f1.close()
+            f2.close()
+            #pass
 
 if __name__ == "__main__":
     #indexer = Indexer()
     #indexer.indexer_main()
 
-    with open("./FileOutput/mergedict.json", "w+") as mergeFile:
-        mergeFile.write('{ ')
-        not_end = True
-        list_of_keys = []
-        f1 = open("./FileOutput/dict1.json", "r")
-        f2 = open("./FileOutput/dict2.json", "r")
-        while not_end:
-            word_f1 = ''
-            word_f2 = ''
-            line_f1 = f1.readline()
-            line_f2 = f2.readline()
-            while True:
-            #for line in f1:
-                part = line_f1.strip()
-                if word_f1 == '' and part == '{':
-                    line_f1 = f1.readline()
-                    continue
-                if part == '}}':
-                    not_end = False
-                word_f1 = word_f1 + part
-                if part == '},':
-                    print("END")
-                    word_f1 = '{'+word_f1[:-1]+'}'
-                    #line_f1 = f1.readline()
-                    break
-                line_f1 = f1.readline()
-            word_f1 = eval(word_f1)
+    #dict1 = open('./FileOutput/dict1.txt')
+    #while True:
+    #    line_dict1 = dict1.readline()
+    #    print(eval(line_dict1))
 
-            while True:
-            #for line in f2:
-                part1 = line_f2.strip()
-                if word_f2 == '' and part1 == '{':
-                    line_f2 = f2.readline()
-                    continue
-                if part1 == '}}':
-                    not_end = False
-                word_f2 = word_f2 + part1
-                if part1 == '},':
-                    print("END")
-                    word_f2 = '{'+word_f2[:-1]+'}'
-                    #line_f2 = f2.readline()
-                    break
-                line_f2 = f2.readline()
-            word_f2 = eval(word_f2)
-            print(word_f1)
-            print(word_f2)
-            if list(word_f1.keys())[0] == list(word_f2.keys())[0]:
-                print("wye")
-                word_f1[next(iter(word_f1))].update(word_f2[next(iter(word_f2))])
-                print(word_f1)
-                mergeFile.write(str(word_f1)[1:-1]+", ")
-            if input('dfsd') == 'a':
-                mergeFile.close()
-            else:
-                continue
-        mergeFile.write('}')
+    merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
+    merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
+    merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
+
+    # with open("./FileOutput/mergedict.txt", "w+") as mergeFile:
+    #     f1 = open("./FileOutput/dict1.txt", "r")
+    #     f2 = open("./FileOutput/dict2.txt", "r")
+    #     try:
+    #         merged_list = []
+    #         break_file = 0
+    #         while True:
+    #             l1 = []
+    #             l2 = []
+    #             if len(l1) == 0:
+    #                 line_f1 = f1.readline()
+    #                 if line_f1 == "":
+    #                     print("break line_f1")
+    #                     break_file = 0
+    #                     break
+    #                 l1.append(eval(line_f1.strip()))
+    #             if len(l2) == 0:
+    #                 line_f2 = f2.readline()
+    #                 if line_f2 == "":
+    #                     print("break line_f2")
+    #                     break_file = 1
+    #                     break
+    #                 l2.append(eval(line_f2.strip()))
+    #
+    #             # print(l1)
+    #             # print(l2)
+    #
+    #             if list(l1[0].keys())[0] == list(l2[0].keys())[0]:
+    #                 l1[0][next(iter(l1[0]))].update(l2[0][next(iter(l2[0]))])
+    #                 merged_list.append(l1[0])
+    #                 #merged_list.append(l1[0].update(l2[0]))
+    #                 #print(l1[0].update(l2[0]))
+    #                 l1.pop(0)
+    #                 l2.pop(0)
+    #             elif list(l1[0].keys())[0] < list(l2[0].keys())[0]:
+    #                 merged_list.append(l1[0])
+    #                 l1.pop(0)
+    #             elif list(l1[0].keys())[0] > list(l2[0].keys())[0]:
+    #                 merged_list.append(l2[0])
+    #                 l2.pop(0)
+    #         if break_file == 0:
+    #             while True:
+    #                 line_f2 = f2.readline()
+    #                 if line_f2 == "":
+    #                     break
+    #                 merged_list.append((eval(line_f2.strip())))
+    #         elif break_file == 1:
+    #             while True:
+    #                 line_f1 = f1.readline()
+    #                 if line_f1 == "":
+    #                     break
+    #                 merged_list.append((eval(line_f1.strip())))
+    #         for i in merged_list:
+    #             print(i)
+    #             mergeFile.write(str(i) + "\n")
+    #     except EOFError:
+    #         print("end of file")
+    #         pass
