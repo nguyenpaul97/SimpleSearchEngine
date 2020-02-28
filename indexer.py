@@ -28,7 +28,14 @@ class Indexer:
         # for M1 report
         self.doc_count = 0
         self.unique_count = set()
+    def readSearchQuery(self):
+        query = input("search query : ")
+    
+        queryList = []
+        for q in self.tokenizer.tokenize(query):
+            queryList.append(self.stemmer.stem(q.lower()))
 
+        return queryList
     def indexer_main(self):
         if os.path.exists('DEV'):
             for path in os.listdir('DEV'):
