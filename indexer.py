@@ -11,13 +11,14 @@ import re
 from eventlet.timeout import Timeout
 
 
-INDEX_SIZE = 10000
+INDEX_SIZE = 100
 
 class Indexer:
 
     def __init__(self):
         # Posting structure: {token: {doc index #: [tf, importance of token]
         self.posting_dict = dict()
+        self.url_dict = dict()
         self.doc_num = 0  # document numbering or N
         self.fileId = 1
 
@@ -46,6 +47,8 @@ class Indexer:
                     with open(json_path, 'r') as jfile:
                         with Timeout(5, False):
                             data = js.load(jfile)
+                            url = data['url']
+                            self.url_dict[self.doc_num] = url
                             self.parse_html(self.doc_num, data['content'])
                     self.doc_num += 1
                     if self.doc_num % INDEX_SIZE == 0:
@@ -55,6 +58,8 @@ class Indexer:
             print(self.doc_count)
             print(self.doc_num)
             print(len(self.unique_count))
+            with open("./FileOutput/urls.txt", "w") as url_txt:
+                url_txt.write(str(self.url_dict))
             with open("./FileOutput/report.txt", "w+") as f:
                 f.write("number of documents: "+str(self.doc_num)+"\n")
                 f.write("number of unique tokens: " + str(len(self.unique_count)))
@@ -89,25 +94,22 @@ class Indexer:
         self.posting_dict = dict()
 
 
-    def mergeIndexFiles(self):
-        pass
-
-
     def parse_html(self, doc_index, content):
         soup = BeautifulSoup(content, "lxml")
         #print(doc_index)
-        for line in soup.find_all(["h1", "h2", "h3", "strong", "b"]):
+        for line in soup.find_all(["h1", "h2", "h3", "strong", "b", "title"]):
             text = line.get_text()
             text = self.removeNonAscii(text)
-            token_list = self.tokenizer.tokenize(text)
+            token_list = tokenizer(text)
+            #token_list = self.tokenizer.tokenize(text)
             for token in token_list:
                 self.index_token(token, doc_index, 2)
 
         all_text = self.find_all_text(soup)
         for words in all_text:
             words = self.removeNonAscii(words)
-            tokens = self.tokenizer.tokenize(words)
-            #tokens = self.tokenize(words)
+            tokens = tokenizer(words)
+            #tokens = self.tokenizer.tokenize(words)
             for token in tokens:
                 self.index_token(token, doc_index, 0)
 
@@ -116,7 +118,6 @@ class Indexer:
         self.doc_count += 1
 
 
-    # CHANGE THIS FORMAT, TOO CLOSE TO ANDREWS
     def index_token(self, token, doc_index, importance):
         stemmed = self.stemmer.stem(token.lower())
         if not self.check_word(stemmed):
@@ -247,6 +248,7 @@ def tokenizer(text : "str") -> list:
     data = re.split('[^a-z0-9]+',text.lower())
     data = list(filter(None, data))
     return data
+
 if __name__ == "__main__":
     indexer = Indexer()
     indexer.indexer_main()
@@ -256,11 +258,11 @@ if __name__ == "__main__":
     #    line_dict1 = dict1.readline()
     #    print(eval(line_dict1))
 
-    merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
-    merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
-    merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
-    merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
-    merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+    #merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
+    #merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
+    #merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
+    #merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
+    #merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
 
 
     # with open("./FileOutput/mergedict.txt", "w+") as mergeFile:
