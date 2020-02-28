@@ -234,6 +234,12 @@ def merge(file1, file2, writefile):
             f2.close()
             #pass
 
+            
+def tokenizer(text : "str") -> list:
+    data = [] 
+    data = re.split('[^a-z0-9]+',text.lower())
+    data = list(filter(None, data))
+    return data
 if __name__ == "__main__":
     indexer = Indexer()
     indexer.indexer_main()
