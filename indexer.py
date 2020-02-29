@@ -29,14 +29,7 @@ class Indexer:
         # for M1 report
         self.doc_count = 0
         self.unique_count = set()
-    def readSearchQuery(self):
-        query = input("search query : ")
     
-        queryList = []
-        for q in self.tokenizer.tokenize(query):
-            queryList.append(self.stemmer.stem(q.lower()))
-
-        return queryList
     def indexer_main(self):
         if os.path.exists('DEV'):
             for path in os.listdir('DEV'):
@@ -171,7 +164,7 @@ def read_back_from_final_marge(finalMerge, bk):
         count = 0
         bookKeeping.write("numbers " + str(count) + " ")
         bookKeeping.close()
-    #alphabet = ['a',  'b' , 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+  
     with open(bk, "a+") as bookKeeping:
         while True:
             line = read_file.readline()
