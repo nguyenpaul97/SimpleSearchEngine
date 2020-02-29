@@ -161,7 +161,7 @@ def makeBookkeeping(finalMerge, bk):
     with open(bk, "w") as bookKeeping:
         read_file = open(finalMerge, "r")
         count = 0
-        bookKeeping.write("1 " + str(count) + " ")
+        bookKeeping.write("# " + str(count) + " ")
         bookKeeping.close()
   
     with open(bk, "a+") as bookKeeping:
