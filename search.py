@@ -27,6 +27,7 @@ class search:
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
 
+    
     #it returns a chunk of list from first and second word and ...
     def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
         data = []# book keeping
@@ -39,30 +40,35 @@ class search:
         data = list(filter(None, data))
         final_marg = open(finalMerge,"r")
 
-# m is each word in query 
-        for m in list_word:
-            final_marg.seek(0)
-            first_char = m[0]
-            # lst has the bookKeeping list
-            
-            
-            index = data.index(first_char)
-            start =  data[index+1]
-            end = data[index+2]
+# m is each word in query
+        try:
+            for m in list_word:
+                final_marg.seek(0)
+                first_char = m[0]
+                # lst has the bookKeeping list
+                
+                
+                index = data.index(first_char)
+                start =  data[index+1]
+                end = data[index+2]
 
-            chunk = int(end) - int(start)
+                chunk = int(end) - int(start)
 
-            
-            final_marg.seek(int(start))
-            # c has [{},{},...]
-            c = final_marg.read(chunk)
-            
-            documents.extend(c.split('\n'))
-            documents = list(filter(None, documents))
-            #print(len(documents))
-            """ for i in documents:
-                print(i) """
-
+                
+                final_marg.seek(int(start))
+                # c has [{},{},...]
+                c = final_marg.read(chunk)
+                
+                documents.extend(c.split('\n'))
+                documents = list(filter(None, documents))
+                #print(len(documents))
+                """ for i in documents:
+                    print(i) """
+        except:
+            pass
+        finally:
+            final_marg.close()
+        
         return documents
             
 if __name__ == "__main__":
