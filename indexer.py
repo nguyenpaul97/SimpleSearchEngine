@@ -164,6 +164,65 @@ class Indexer:
     # https://stackoverflow.com/questions/1342000/how-to-make-the-python-interpreter-correctly-handle-non-ascii-characters-in-stri
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
+def read_back_from_final_marge(finalMerge, bk):
+    newCharacter = False
+    with open(bk, "w") as bookKeeping:
+        read_file = open(finalMerge, "r")
+        count = 0
+        bookKeeping.write("numbers " + str(count) + " ")
+        bookKeeping.close()
+    #alphabet = ['a',  'b' , 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    with open(bk, "a+") as bookKeeping:
+        while True:
+            line = read_file.readline()
+            count += 1
+            tokenDict = eval(line.strip())
+            token = list(tokenDict.keys())[0]
+            #print(token.isdigit())
+            print(token[0].isdigit())
+            if (token[0].isdigit() == False):
+                
+                bookKeeping.write(str(count-1) + "\n")
+                bookKeeping.write(token[0] + " " + str(count) + " ")
+                break
+    
+        newCharacter = False
+        character = token[0]
+        while True:
+            
+            line = read_file.readline()
+            if (line == ""):
+                bookKeeping.write(str(count-1) + "\n")
+                break
+            tokenDict = eval(line.strip())
+            token = list(tokenDict.keys())[0]
+            print(character)
+            
+            if (token[0] != character):
+                newCharacter = True
+            else:
+                newCharacter = False
+
+            
+                
+            if (newCharacter == True):
+                bookKeeping.write(str(count-1) + "\n")
+                character = token[0]
+                bookKeeping.write(token[0] + " " + str(count) + " ")
+            count += 1
+                
+            
+                
+                
+            
+
+                
+
+                
+
+
+
+        read_file.close()
 
 def merge(file1, file2, writefile):
     with open(writefile, "w") as mergeFile:
@@ -250,8 +309,9 @@ def tokenizer(text : "str") -> list:
     return data
 
 if __name__ == "__main__":
-    indexer = Indexer()
-    indexer.indexer_main()
+    # indexer = Indexer()
+    # indexer.indexer_main()
+    read_back_from_final_marge("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
     #dict1 = open('./FileOutput/dict1.txt')
     #while True:
