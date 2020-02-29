@@ -27,31 +27,56 @@ class search:
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
 
-# we need the posting.txt final.txt  
-#read line by line 
-
-    def final_search_file(finalMerge, bookkeeping, list_word : 'list') -> list:
-        data= []
-        lst = [] # book keeping
-        documents = []
-        with open(bookkeeping, "r") as final_m:
-            data = final_m.read()
-            # add this to a list of pookkeeping
-            for i in data:
-                lst.extend(i)
+    #it returns a chunk of list from first and second word and ...
+    def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
+        data = []# book keeping
+        documents = []  #
+        str1 = ""
+        with open(bookkeeping, "r") as f:
+            str1 = f.read()
+       
+        data = str1.split(" ")
+        data = list(filter(None, data))
         final_marg = open(finalMerge,"r")
+
+# m is each word in query 
         for m in list_word:
-            # m is the word
-            finalMerge.seek(0)
+            final_marg.seek(0)
             first_char = m[0]
-            if first_char in lst:
-                ind = lst.index(first_char)
-                start = lst[ind+1]
-                end = lst[ind+2]
-            chunk = end - start
-            finalMerge.seek(start)
-            c = finalMerge.read(chunk)
-            while True:
+            # lst has the bookKeeping list
+            
+            
+            index = data.index(first_char)
+            start =  data[index+1]
+            end = data[index+2]
+
+            chunk = int(end) - int(start)
+
+            
+            final_marg.seek(int(start))
+            # c has [{},{},...]
+            c = final_marg.read(chunk)
+            
+            documents.extend(c.split('\n'))
+            documents = list(filter(None, documents))
+            #print(len(documents))
+            """ for i in documents:
+                print(i) """
+
+        return documents
+            
+if __name__ == "__main__":
+    searcher = search()
+    qList = searcher.readSearchQuery()
+    #qList = ["a","b"]
+    print(qList)
+    searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt",qList)
+
+
+
+
+
+""" while True:
                 line = c.readline()
                 if line == "":
                     break
@@ -61,9 +86,4 @@ class search:
                     documents.append(d.values())
                     break
 
-        return documents
-if __name__ == "__main__":
-    searcher = search()
-    qList = searcher.readSearchQuery()
-    print(qList)
-
+        return documents """
