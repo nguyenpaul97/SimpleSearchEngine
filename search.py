@@ -21,3 +21,9 @@ class search:
         data = re.split('[^a-z0-9]+', text.lower())
         data = list(filter(None, data))
         return data
+
+if __name__ == "__main__":
+    searcher = search()
+    qList = search.readSearchQuery()
+    print(qList)
+
