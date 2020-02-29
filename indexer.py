@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import PorterStemmer
-import math
-import numpy as np
 from collections import OrderedDict
 import re
 from eventlet.timeout import Timeout
@@ -29,7 +27,8 @@ class Indexer:
         # for M1 report
         self.doc_count = 0
         self.unique_count = set()
-    
+
+
     def indexer_main(self):
         if os.path.exists('DEV'):
             for path in os.listdir('DEV'):
@@ -120,9 +119,9 @@ class Indexer:
                 self.posting_dict[stemmed][doc_index][0] += 1
                 self.posting_dict[stemmed][doc_index][1] += importance
             else:
-                self.posting_dict[stemmed][doc_index] = [1, importance, 0]
+                self.posting_dict[stemmed][doc_index] = [1, importance]
         else: # list contains: frequency, weight, tf-idf score
-            self.posting_dict[stemmed] = {doc_index: [1, importance, 0]}
+            self.posting_dict[stemmed] = {doc_index: [1, importance]}
         if stemmed not in self.unique_count:
             self.unique_count.add(stemmed)
 
@@ -286,7 +285,6 @@ def merge(file1, file2, writefile):
 
             
 def tokenizer(text : "str") -> list:
-    data = [] 
     data = re.split('[^a-z0-9]+',text.lower())
     data = list(filter(None, data))
     return data
@@ -296,11 +294,6 @@ if __name__ == "__main__":
     # indexer.indexer_main()
     makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
-    #dict1 = open('./FileOutput/dict1.txt')
-    #while True:
-    #    line_dict1 = dict1.readline()
-    #    print(eval(line_dict1))
-
     #merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
     #merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
     #merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
@@ -308,61 +301,3 @@ if __name__ == "__main__":
     #merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
 
 
-    # with open("./FileOutput/mergedict.txt", "w+") as mergeFile:
-    #     f1 = open("./FileOutput/dict1.txt", "r")
-    #     f2 = open("./FileOutput/dict2.txt", "r")
-    #     try:
-    #         merged_list = []
-    #         break_file = 0
-    #         while True:
-    #             l1 = []
-    #             l2 = []
-    #             if len(l1) == 0:
-    #                 line_f1 = f1.readline()
-    #                 if line_f1 == "":
-    #                     print("break line_f1")
-    #                     break_file = 0
-    #                     break
-    #                 l1.append(eval(line_f1.strip()))
-    #             if len(l2) == 0:
-    #                 line_f2 = f2.readline()
-    #                 if line_f2 == "":
-    #                     print("break line_f2")
-    #                     break_file = 1
-    #                     break
-    #                 l2.append(eval(line_f2.strip()))
-    #
-    #             # print(l1)
-    #             # print(l2)
-    #
-    #             if list(l1[0].keys())[0] == list(l2[0].keys())[0]:
-    #                 l1[0][next(iter(l1[0]))].update(l2[0][next(iter(l2[0]))])
-    #                 merged_list.append(l1[0])
-    #                 #merged_list.append(l1[0].update(l2[0]))
-    #                 #print(l1[0].update(l2[0]))
-    #                 l1.pop(0)
-    #                 l2.pop(0)
-    #             elif list(l1[0].keys())[0] < list(l2[0].keys())[0]:
-    #                 merged_list.append(l1[0])
-    #                 l1.pop(0)
-    #             elif list(l1[0].keys())[0] > list(l2[0].keys())[0]:
-    #                 merged_list.append(l2[0])
-    #                 l2.pop(0)
-    #         if break_file == 0:
-    #             while True:
-    #                 line_f2 = f2.readline()
-    #                 if line_f2 == "":
-    #                     break
-    #                 merged_list.append((eval(line_f2.strip())))
-    #         elif break_file == 1:
-    #             while True:
-    #                 line_f1 = f1.readline()
-    #                 if line_f1 == "":
-    #                     break
-    #                 merged_list.append((eval(line_f1.strip())))
-    #         for i in merged_list:
-    #             print(i)
-    #             mergeFile.write(str(i) + "\n")
-    #     except EOFError:
-    #         print("end of file")
-    #         pass
