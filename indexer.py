@@ -157,7 +157,7 @@ class Indexer:
     # https://stackoverflow.com/questions/1342000/how-to-make-the-python-interpreter-correctly-handle-non-ascii-characters-in-stri
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
-def read_back_from_final_marge(finalMerge, bk):
+def makeBookkeeping(finalMerge, bk):
     newCharacter = False
     with open(bk, "w") as bookKeeping:
         read_file = open(finalMerge, "r")
@@ -205,17 +205,7 @@ def read_back_from_final_marge(finalMerge, bk):
             count += 1
                 
             
-                
-                
-            
-
-                
-
-                
-
-
-
-        read_file.close()
+    read_file.close()
 
 def merge(file1, file2, writefile):
     with open(writefile, "w") as mergeFile:
@@ -304,7 +294,7 @@ def tokenizer(text : "str") -> list:
 if __name__ == "__main__":
     # indexer = Indexer()
     # indexer.indexer_main()
-    read_back_from_final_marge("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
+    makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
     #dict1 = open('./FileOutput/dict1.txt')
     #while True:
