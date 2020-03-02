@@ -37,39 +37,34 @@ class search:
             str1 = f.read()
        
         data = str1.split(" ")
-        data = list(filter(None, data))
-        final_marg = open(finalMerge,"r")
-
+        data = list(filter(None, data))     
 # m is each word in query
         try:
-            for m in list_word:
-                final_marg.seek(0)
+            for m in list_word:           
                 first_char = m[0]
                 # lst has the bookKeeping list
-                
-                
                 index = data.index(first_char)
                 start =  data[index+1]
                 end = data[index+2]
+                start_index = int(start)
+                end_index = int(end)            
 
-                chunk = int(end) - int(start)
+                with open(finalMerge,"r") as marg_file:
+                    lines = marg_file.readlines()
+                c = lines[start_index:end_index:1]
 
-                
-                final_marg.seek(int(start))
-                # c has [{},{},...]
-                c = final_marg.read(chunk)
-                
-                documents.extend(c.split('\n'))
-                documents = list(filter(None, documents))
-                #print(len(documents))
-                """ for i in documents:
-                    print(i) """
+
+                """ j = 0
+                for i in c:
+                    if j == 10:
+                        break;
+                    else:
+                        print(i)
+                    j += 1
+                print(len(c)) """
         except:
             pass
-        finally:
-            final_marg.close()
-        
-        return documents
+        return c
             
 if __name__ == "__main__":
     searcher = search()
