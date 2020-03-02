@@ -167,25 +167,33 @@ def makeBookkeeping(finalMerge, bk):
     with open(bk, "a+") as bookKeeping:
         while True:
             line = read_file.readline()
-            count += 1
+            increment = len(line) + 1
+            
             tokenDict = eval(line.strip())
             token = list(tokenDict.keys())[0]
             #print(token.isdigit())
             print(token[0].isdigit())
+            
             if (token[0].isdigit() == False):
                 
-                bookKeeping.write(str(count-1) + "\n")
-                bookKeeping.write(token[0] + " " + str(count) + " ")
+                bookKeeping.write(str(count) + "\n")
+                bookKeeping.write(token[0] + " " + str(count) + "\n")
+                count += increment
                 break
-    
+
+            count += increment
+
         newCharacter = False
         character = token[0]
         while True:
             
             line = read_file.readline()
+            
+            
             if (line == ""):
-                bookKeeping.write(str(count-1) + "\n")
+                
                 break
+            increment = len(line)+1
             tokenDict = eval(line.strip())
             token = list(tokenDict.keys())[0]
             print(character)
@@ -198,10 +206,10 @@ def makeBookkeeping(finalMerge, bk):
             
                 
             if (newCharacter == True):
-                bookKeeping.write(str(count-1) + "\n")
+                
                 character = token[0]
-                bookKeeping.write(token[0] + " " + str(count) + " ")
-            count += 1
+                bookKeeping.write(token[0] + " " + str(count) + "\n")
+            count += increment
                 
             
     read_file.close()

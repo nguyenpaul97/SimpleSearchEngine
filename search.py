@@ -30,7 +30,7 @@ class search:
 # we need the posting.txt final.txt  
 #read line by line 
 
-    def final_search_file(finalMerge, bookkeeping, list_word : 'list') -> list:
+    def final_search_file(self, finalMerge, bookkeeping, list_word : 'list') -> list:
         data= []
         lst = [] # book keeping
         documents = []
@@ -39,16 +39,19 @@ class search:
             # add this to a list of pookkeeping
             for i in data:
                 lst.extend(i)
+        print(lst)
         final_marg = open(finalMerge,"r")
         for m in list_word:
             # m is the word
-            finalMerge.seek(0)
+            final_marg.seek(0)
             first_char = m[0]
             if first_char in lst:
                 ind = lst.index(first_char)
                 start = lst[ind+1]
                 end = lst[ind+2]
-            chunk = end - start
+            print("Start", start)
+            print("end",end)
+            chunk = int(end.strip()) - int(start.strip())
             finalMerge.seek(start)
             c = finalMerge.read(chunk)
             while True:
@@ -64,6 +67,25 @@ class search:
         return documents
 if __name__ == "__main__":
     searcher = search()
-    qList = searcher.readSearchQuery()
-    print(qList)
+    # qList = searcher.readSearchQuery()
+    # print(qList)
+    query = ["cristina", "lope"]
 
+    #a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", query)
+    f = open("./FileOutput/finalmerged.txt", "r")
+    count = 84021442
+
+    i = 0
+    # while True and i < 5:
+    #     line = f.readline()
+    #     increment = len(line) + 1
+        
+    #     print(count)
+    #     f.seek(count)
+    #     print(f.readline())
+    #     print("--------")
+    #     count += increment
+        
+    #     i += 1
+    f.seek(count)
+    print(f.readline())    
