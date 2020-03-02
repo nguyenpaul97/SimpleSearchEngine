@@ -32,6 +32,7 @@ class search:
     def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
         data = []# book keeping
         str1 = ""
+        c = []
         with open(bookkeeping, "r") as f:
             str1 = f.read()
        
@@ -50,7 +51,8 @@ class search:
 
                 with open(finalMerge,"r") as marg_file:
                     lines = marg_file.readlines()
-                c = lines[start_index:end_index:1]
+                c.extend(lines[start_index:end_index:1])
+
 
 
                 """ j = 0
