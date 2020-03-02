@@ -31,7 +31,6 @@ class search:
     #it returns a chunk of list from first and second word and ...
     def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
         data = []# book keeping
-        documents = []  #
         str1 = ""
         with open(bookkeeping, "r") as f:
             str1 = f.read()
