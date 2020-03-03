@@ -10,10 +10,7 @@ class search:
         self.stemmer = PorterStemmer()
 
     def readSearchQuery(self):
-        
-
-        query = input("search query : ")
-        
+        query = input("search query : ")  
         query = set(self.tokenizer(query)) - set(stop_words)
         print(query)
         queryList = []
@@ -41,10 +38,11 @@ class search:
         str1 = ""
         c = []
         with open(bookkeeping, "r") as f:
-            str1 = f.read()
-       
+            str1 = f.read() 
         data = str1.split(" ")
-        data = list(filter(None, data))     
+        data = list(filter(None, data))   
+        with open(finalMerge,"r") as marg_file:
+                    lines = marg_file.readlines()  
 # m is each word in query
         try:
             for m in list_word:           
@@ -55,39 +53,25 @@ class search:
                 end = data[index+2]
                 start_index = int(start)
                 end_index = int(end)            
-
-                with open(finalMerge,"r") as marg_file:
-                    lines = marg_file.readlines()
                 c.extend(lines[start_index:end_index:1])
-
-
-
-                """ j = 0
-                for i in c:
-                    if j == 10:
-                        break;
-                    else:
-                        print(i)
-                    j += 1
-                print(len(c)) """
         except:
             pass
         return c
+        """ 
+        come up with a better serach algorithem
+        """
     def match_exact_query(self,sameCharacterWordList, qList):
         i = 0
         docIDList = []
-        for s in sameCharacterWordList:
-            
+        for s in sameCharacterWordList:            
             token = list(eval(s).keys())[0]
-            
-            
+
             for qToken in qList:
                 
                 if (token == qToken):
                     posting = list(eval(s).values())
                     #print("match=", token)
-                    
-                    
+
                     for p in posting:
                         #print(type(p))
                         docIDList.extend(list(p.keys()))
@@ -126,23 +110,10 @@ if __name__ == "__main__":
 
     searcher = search()
     qList = searcher.readSearchQuery()
-
+    #qList = ["master","of","software","engineering"]
     
     print(qList)
     sameCharacterWordList = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt",qList)
     docIDResults = searcher.match_exact_query(sameCharacterWordList, qList)
     findURL(docIDResults, "./FileOutput/urls.txt", 5)
 
-
-
-""" while True:
-                line = c.readline()
-                if line == "":
-                    break
-                d = eval(line)
-                key = list(d.keys())[0]
-                if key == m:
-                    documents.append(d.values())
-                    break
-
-        return documents """
