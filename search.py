@@ -13,11 +13,13 @@ class search:
         
 
         query = input("search query : ")
-
+        
+        query = set(self.tokenizer(query)) - set(stop_words)
+        print(query)
         queryList = []
-        for q in self.tokenizer(query):
-            if q not in stop_words:
-                queryList.append(self.stemmer.stem(q.lower()))
+        for q in query:
+            
+            queryList.append(self.stemmer.stem(q.lower()))
 
         return queryList
 
