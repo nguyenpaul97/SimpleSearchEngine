@@ -1,5 +1,5 @@
 from nltk.stem import PorterStemmer
-
+from bisect import bisect_left
 import os
 import json as js
 import re
@@ -68,6 +68,7 @@ class search:
         data= []
         lst = [] # book keeping
         documents = []
+        keyList = []
         with open(bookkeeping, "r") as final_m:
             data = final_m.read()
             # add this to a list of pookkeeping
@@ -89,31 +90,67 @@ class search:
             #chunk = int(end.strip()) - int(start.strip())
             final_marg.seek(start)
             count = start
-            
+            sizeWord = len(m)
+            print(sizeWord)
             while count < end:
                 line = final_marg.readline()
                 if line == "":
                     break
-                #print(line)
+
+                # print(line)
                 count += len(line)
-                d = eval(line)
-                key = list(d.keys())[0]
+                documents.append(line.strip())
+                # l = eval(line)
+            
+                # key = list(l.keys())[0]
                 
-                if key == m:
-                    print(key)
-                    docIDDict = d[key]
-                    for docID in docIDDict:
-                        documents.append(docID)
+                
+                keyList.append(line[2:sizeWord+2])
+                #print(key)
+                #print(line[2:len(m)])
+                # if key == m:
+                #     print(key)
+                #     docIDDict = d[key]
+                #     for docID in docIDDict:
+                #         documents.append(docID)
                     
-                    break
+                #     break
         
-        return documents
-    def match_exact_word(self, documents, qList):
-        d = documents
+        return documents, keyList
+    def match_exact_word(self, documents, keyList, qList):
+        #print(keyList)
+        documentIDList = []
+        # print("start key list")
+        # for d in documents:
+            
+        #     l = eval(d)
+            
+        #     key = list(l.keys())[0]
+        #     keyList.append(key)
+        # print("end key list")
+        for q in qList:
+            print("keyword", q)
+            if q in keyList:
+                i = keyList.index(q)
+                print("in keyList", keyList.index(q))
+                l = eval(documents[i])
+            
+                key = list(l.keys())[0]
+                documentIDList.extend(list(l[key].keys()))
+                #key = 
+                #print(eval)
+        d = set()
         if (len(qList) > 1):
-            d = duplicates_helper(documents)
+            d = duplicates_helper(documentIDList)
             print("done with duplicate")
         return d
+
+def BinSearch(a, x):
+    i = bisect_left(a, x)
+    if i != len(a) and a[i] == x:
+        return i
+    else:
+        return -1
 def findURL(docIDResults, URLFile, limit):
         read_file = open(URLFile, "r")
         dictionary = read_file.read()
@@ -125,6 +162,7 @@ def findURL(docIDResults, URLFile, limit):
             i += 1  
         #print(documents)
 def duplicates_helper(docIDList):
+    #print(docIDList)
     print("in duplicate")
     duplicates = []
     for item in docIDList:
@@ -135,23 +173,30 @@ if __name__ == "__main__":
     searcher = search()
     qList = searcher.readSearchQuery()
     print(qList)
-    #query = ["cristina", "lope"]
+    # #query = ["cristina", "lope"]
 
     a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
-    #f = open("./FileOutput/finalmerged.txt", "r")
     
+    
+    #print(a)
+    d = list(searcher.match_exact_word(a[0], a[1], qList))
+    print(findURL(d, "./FileOutput/urls.txt", 5))
 
-    d = list(searcher.match_exact_word(a, qList))
-    findURL(d, "./FileOutput/urls.txt", 5)
-    # while True and i < 5:
+    # f = open("./FileOutput/finalmerged.txt", "r")
+    # i = 0
+    # count = 114925785
+    # f.seek(count)
+    
+    # while count < 119453817:
     #     line = f.readline()
-    #     increment = len(line) + 1
+    #     increment = len(line)
         
-    #     print(count)
-    #     f.seek(count)
-    #     print(f.readline())
-    #     print("--------")
+    #     #print(count)
+        
+    #     print(line)
+    #     #print("--------")
     #     count += increment
         
     #     i += 1
    
+    # print(i)

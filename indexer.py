@@ -156,6 +156,8 @@ class Indexer:
     # https://stackoverflow.com/questions/1342000/how-to-make-the-python-interpreter-correctly-handle-non-ascii-characters-in-stri
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
+
+
 def makeBookkeeping(finalMerge, bk):
     newCharacter = False
     with open(bk, "w") as bookKeeping:
