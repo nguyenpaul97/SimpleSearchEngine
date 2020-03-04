@@ -31,38 +31,38 @@ class search:
 
     
     #it returns a chunk of list from first and second word and ...
-    def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
-        data = []# book keeping
-        str1 = ""
-        c = []
-        with open(bookkeeping, "r") as f:
-            str1 = f.read() 
-        data = str1.split(" ")
-        data = list(filter(None, data))   
-        with open(finalMerge,"r") as marg_file:
-                    lines = marg_file.readlines()  
-# m is each word in query
-        try:
-            for m in list_word:           
-                first_char = m[0]
-                # lst has the bookKeeping list
-                index = data.index(first_char)
-                start =  data[index+1]
-                end = data[index+2]
-                start_index = int(start)
-                end_index = int(end)            
-                c.extend(lines[start_index:end_index:1])
-        except:
-            pass
-        return c
-        """ 
-        come up with a better serach algorithem
-        """
-    def match_exact_query(self,sameCharacterWordList, qList):
-        i = 0
-        docIDList = []
-        for s in sameCharacterWordList:            
-            token = list(eval(s).keys())[0]
+#     def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
+#         data = []# book keeping
+#         str1 = ""
+#         c = []
+#         with open(bookkeeping, "r") as f:
+#             str1 = f.read() 
+#         data = str1.split(" ")
+#         data = list(filter(None, data))   
+#         with open(finalMerge,"r") as marg_file:
+#                     lines = marg_file.readlines()  
+# # m is each word in query
+#         try:
+#             for m in list_word:           
+#                 first_char = m[0]
+#                 # lst has the bookKeeping list
+#                 index = data.index(first_char)
+#                 start =  data[index+1]
+#                 end = data[index+2]
+#                 start_index = int(start)
+#                 end_index = int(end)            
+#                 c.extend(lines[start_index:end_index:1])
+#         except:
+#             pass
+#         return c
+#         """ 
+#         come up with a better serach algorithem
+#         """
+    # def match_exact_query(self,sameCharacterWordList, qList):
+    #     i = 0
+    #     docIDList = []
+    #     for s in sameCharacterWordList:            
+    #         token = list(eval(s).keys())[0]
 
     def final_search_file(self, finalMerge, bookkeeping, list_word : 'list') -> list:
         data= []
