@@ -178,19 +178,19 @@ if __name__ == "__main__":
     
     searcher = search()
     qList = searcher.readSearchQuery()
-    start = time.time()
+    
     # #query = ["cristina", "lope"]
     starttime = time.time()
     a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
     #endtime = time.time() - starttime
     #print(endtime)
-    print(a[1])
+    #print(a[1])
     
     #print(a)
     d = list(searcher.match_exact_word(a[0], a[1], qList))
     print(findURL(d, "./FileOutput/urls.txt", 5))
-    end = time.time()
-    print(end - start)
+    
+    
     endtime = time.time()-starttime
     print(endtime)
     # f = open("./FileOutput/finalmerged.txt", "r")
