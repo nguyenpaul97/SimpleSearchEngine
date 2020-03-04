@@ -1,5 +1,6 @@
 from nltk.stem import PorterStemmer
 from bisect import bisect_left
+import time
 import os
 import json as js
 import re
@@ -130,8 +131,9 @@ class search:
         # print("end key list")
         for q in qList:
             print("keyword", q)
-            if q in keyList:
-                i = keyList.index(q)
+            i = BinSearch(keyList, q)
+            #i = keyList.index(q)
+            if (i > 1):
                 print("in keyList", keyList.index(q))
                 l = eval(documents[i])
             
@@ -170,9 +172,10 @@ def duplicates_helper(docIDList):
             duplicates.append(item)
     return set(duplicates)
 if __name__ == "__main__":
+    
     searcher = search()
     qList = searcher.readSearchQuery()
-    print(qList)
+    start = time.time()
     # #query = ["cristina", "lope"]
 
     a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
@@ -181,7 +184,8 @@ if __name__ == "__main__":
     #print(a)
     d = list(searcher.match_exact_word(a[0], a[1], qList))
     print(findURL(d, "./FileOutput/urls.txt", 5))
-
+    end = time.time()
+    print(end - start)
     # f = open("./FileOutput/finalmerged.txt", "r")
     # i = 0
     # count = 114925785
