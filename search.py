@@ -10,12 +10,10 @@ class search:
         self.stemmer = PorterStemmer()
 
     def readSearchQuery(self):
-        query = input("search query : ")  
+        query = input("search query : ")
         query = set(self.tokenizer(query)) - set(stop_words)
-        print(query)
         queryList = []
         for q in query:
-            
             queryList.append(self.stemmer.stem(q.lower()))
 
         return queryList
@@ -66,29 +64,56 @@ class search:
         for s in sameCharacterWordList:            
             token = list(eval(s).keys())[0]
 
-            for qToken in qList:
+    def final_search_file(self, finalMerge, bookkeeping, list_word : 'list') -> list:
+        data= []
+        lst = [] # book keeping
+        documents = []
+        with open(bookkeeping, "r") as final_m:
+            data = final_m.read()
+            # add this to a list of pookkeeping
+            lst = data.split()
+        #print(lst)
+        final_marg = open(finalMerge,"r")
+        for m in list_word:
+            # m is the word
+            final_marg.seek(0)
+            first_char = m[0]
+            if first_char in lst:
+                #print(first_char)
+                ind = lst.index(first_char)
+                #print(ind)
+                start = int(lst[ind+1])
+                end = int(lst[ind+2])
+            print("Start", start)
+            print("End", end)
+            #chunk = int(end.strip()) - int(start.strip())
+            final_marg.seek(start)
+            count = start
+            
+            while count < end:
+                line = final_marg.readline()
+                if line == "":
+                    break
+                #print(line)
+                count += len(line)
+                d = eval(line)
+                key = list(d.keys())[0]
                 
-                if (token == qToken):
-                    posting = list(eval(s).values())
-                    #print("match=", token)
-
-                    for p in posting:
-                        #print(type(p))
-                        docIDList.extend(list(p.keys()))
-        #print(docIDList)
+                if key == m:
+                    print(key)
+                    docIDDict = d[key]
+                    for docID in docIDDict:
+                        documents.append(docID)
+                    
+                    break
+        
+        return documents
+    def match_exact_word(self, documents, qList):
+        d = documents
         if (len(qList) > 1):
-            #print("in the if condition query > 1")
-            docIDList = list(duplicate_helper(docIDList))
-            #print("length of docIDList", len(docIDList))
-            # for i in range(len(docIDList)):
-            
-            #     print(docIDList[i])
-        
-
-            
-            
-        return docIDList
-        
+            d = duplicates_helper(documents)
+            print("done with duplicate")
+        return d
 def findURL(docIDResults, URLFile, limit):
         read_file = open(URLFile, "r")
         dictionary = read_file.read()
@@ -97,23 +122,36 @@ def findURL(docIDResults, URLFile, limit):
             print(eval(dictionary)[docID])
             if (i >= 4):
                 break
-            i += 1
-                
-def duplicate_helper(docIDList):
-    docIDResults = []
+            i += 1  
+        #print(documents)
+def duplicates_helper(docIDList):
+    print("in duplicate")
+    duplicates = []
     for item in docIDList:
         if docIDList.count(item) > 1:
-            docIDResults.append(item)
-    return set(docIDResults)
-
+            duplicates.append(item)
+    return set(duplicates)
 if __name__ == "__main__":
-
     searcher = search()
     qList = searcher.readSearchQuery()
-    #qList = ["master","of","software","engineering"]
-    
     print(qList)
-    sameCharacterWordList = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt",qList)
-    docIDResults = searcher.match_exact_query(sameCharacterWordList, qList)
-    findURL(docIDResults, "./FileOutput/urls.txt", 5)
+    #query = ["cristina", "lope"]
 
+    a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
+    #f = open("./FileOutput/finalmerged.txt", "r")
+    
+
+    d = list(searcher.match_exact_word(a, qList))
+    findURL(d, "./FileOutput/urls.txt", 5)
+    # while True and i < 5:
+    #     line = f.readline()
+    #     increment = len(line) + 1
+        
+    #     print(count)
+    #     f.seek(count)
+    #     print(f.readline())
+    #     print("--------")
+    #     count += increment
+        
+    #     i += 1
+   
