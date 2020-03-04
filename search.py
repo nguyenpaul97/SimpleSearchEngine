@@ -3,6 +3,7 @@ from bisect import bisect_left
 import time
 import os
 import json as js
+import time
 import re
 stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't",
                  'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
@@ -80,6 +81,8 @@ class search:
             # m is the word
             final_marg.seek(0)
             first_char = m[0]
+            start = 0
+            end = 0
             if first_char in lst:
                 #print(first_char)
                 ind = lst.index(first_char)
@@ -166,26 +169,30 @@ def findURL(docIDResults, URLFile, limit):
 def duplicates_helper(docIDList):
     #print(docIDList)
     print("in duplicate")
-    duplicates = []
+    duplicates = set()
     for item in docIDList:
         if docIDList.count(item) > 1:
-            duplicates.append(item)
-    return set(duplicates)
+            duplicates.add(item)
+    return duplicates
 if __name__ == "__main__":
     
     searcher = search()
     qList = searcher.readSearchQuery()
     start = time.time()
     # #query = ["cristina", "lope"]
-
+    starttime = time.time()
     a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
-    
+    #endtime = time.time() - starttime
+    #print(endtime)
+    print(a[1])
     
     #print(a)
     d = list(searcher.match_exact_word(a[0], a[1], qList))
     print(findURL(d, "./FileOutput/urls.txt", 5))
     end = time.time()
     print(end - start)
+    endtime = time.time()-starttime
+    print(endtime)
     # f = open("./FileOutput/finalmerged.txt", "r")
     # i = 0
     # count = 114925785
