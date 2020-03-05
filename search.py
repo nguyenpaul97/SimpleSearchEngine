@@ -67,6 +67,8 @@ class search:
     #         token = list(eval(s).keys())[0]
 
     def final_search_file(self, finalMerge, bookkeeping, list_word : 'list') -> list:
+        startTime = time.time()
+        print("in final search")
         data= []
         lst = [] # book keeping
         documents = []
@@ -90,13 +92,12 @@ class search:
                 #print(ind)
                 start = int(lst[ind+1])
                 end = int(lst[ind+2])
-            print("Start", start)
-            print("End", end)
-            #chunk = int(end.strip()) - int(start.strip())
+            
+            
             final_marg.seek(start)
             count = start
             sizeWord = len(m)
-            print(sizeWord)
+            
             
             while count < end:
                 line = final_marg.readline()
@@ -121,7 +122,7 @@ class search:
                 #         documents.append(docID)
                     
                 #     break
-            
+        print("done with final search", time.time() - startTime, "\n")
         return documents, keyList
     def match_exact_word(self, documents, keyList, qList):
         #print(keyList)
@@ -135,18 +136,18 @@ class search:
         #     keyList.append(key)
         # print("end key list")
         for q in qList:
-            print("keyword", q)
+            
             i = BinSearch(keyList, q)
             #i = keyList.index(q)
             if (i > 1):
-                print("in keyList", keyList.index(q))
+                start = time.time()
                 l = eval(documents[i])
-            
+                #print(l)
                 key = list(l.keys())[0]
                 documentIDList.extend(list(l[key].keys()))
                 #key = 
                 #print(eval)
-        
+                
         if (len(qList) > 1):
             
             
@@ -160,15 +161,35 @@ def BinSearch(a, x):
     else:
         return -1
 def findURL(docIDResults, URLFile, limit):
+        print("in find URL")
         read_file = open(URLFile, "r")
         dictionary = read_file.read()
         i = 0
-        for docID in docIDResults:
-            print(eval(dictionary)[docID])
-            if (i >= 4):
-                break
-            i += 1  
+        URL = []
+        start = time.time()
+        dictionaryList = dictionary.split()
+        i = 0
+        # while i < len(dictionaryList):
+            
+        #     n = len(dictionaryList[i])
+        #     dictionaryList[i] = dictionaryList[i][0:n-1]
+            
+        #     i += 2
+        print("End find URL", time.time() - start, "\n")
+        for d in docIDResults:
+            URL.append(dictionaryList[d*2+1])
+        
+        # for d in dictionaryList:
+        #     print(d)
+        #print("start find URL")
+        # for docID in docIDResults:
+        #     URL.append(eval(dictionary)[docID])
+        #     if (i >= 4):
+        #         break
+        #     i += 1  
+        
         #print(documents)
+        return URL
 def duplicates_helper(docIDList):
     #print(docIDList)
     print("in duplicate")
@@ -177,7 +198,7 @@ def duplicates_helper(docIDList):
     for item in docIDList:
         if docIDList.count(item) > 1:
             duplicates.add(item)
-    print("done ", time.time() - start)
+    print("done with duplicate", time.time() - start, "\n")
     return duplicates
 if __name__ == "__main__":
     
@@ -194,11 +215,17 @@ if __name__ == "__main__":
         
         #print(a)
         d = list(searcher.match_exact_word(a[0], a[1], qList))
-        print(findURL(d, "./FileOutput/urls.txt", 5))
+        URL = findURL(d, "./FileOutput/urls.txt", 5)
         
         
         endtime = time.time()-starttime
-        print(endtime)
+        print("************\nTotal = ", endtime)
+
+        i = 0
+        for u in URL:
+            if (i < 5):
+                print(u)
+            i+=1
         # f = open("./FileOutput/finalmerged.txt", "r")
         # i = 0
         # count = 114925785
