@@ -77,6 +77,7 @@ class search:
             lst = data.split()
         #print(lst)
         final_marg = open(finalMerge,"r")
+        list_word.sort()
         for m in list_word:
             # m is the word
             final_marg.seek(0)
@@ -96,6 +97,7 @@ class search:
             count = start
             sizeWord = len(m)
             print(sizeWord)
+            
             while count < end:
                 line = final_marg.readline()
                 if line == "":
@@ -119,7 +121,7 @@ class search:
                 #         documents.append(docID)
                     
                 #     break
-        
+            
         return documents, keyList
     def match_exact_word(self, documents, keyList, qList):
         #print(keyList)
@@ -144,11 +146,12 @@ class search:
                 documentIDList.extend(list(l[key].keys()))
                 #key = 
                 #print(eval)
-        d = set()
+        
         if (len(qList) > 1):
-            d = duplicates_helper(documentIDList)
-            print("done with duplicate")
-        return d
+            
+            
+            return duplicates_helper(documentIDList)
+        return documentIDList
 
 def BinSearch(a, x):
     i = bisect_left(a, x)
@@ -169,45 +172,48 @@ def findURL(docIDResults, URLFile, limit):
 def duplicates_helper(docIDList):
     #print(docIDList)
     print("in duplicate")
+    start = time.time()
     duplicates = set()
     for item in docIDList:
         if docIDList.count(item) > 1:
             duplicates.add(item)
+    print("done ", time.time() - start)
     return duplicates
 if __name__ == "__main__":
     
     searcher = search()
-    qList = searcher.readSearchQuery()
-    
-    # #query = ["cristina", "lope"]
-    starttime = time.time()
-    a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
-    #endtime = time.time() - starttime
-    #print(endtime)
-    #print(a[1])
-    
-    #print(a)
-    d = list(searcher.match_exact_word(a[0], a[1], qList))
-    print(findURL(d, "./FileOutput/urls.txt", 5))
+    while True:
+        qList = searcher.readSearchQuery()
     
     
-    endtime = time.time()-starttime
-    print(endtime)
-    # f = open("./FileOutput/finalmerged.txt", "r")
-    # i = 0
-    # count = 114925785
-    # f.seek(count)
-    
-    # while count < 119453817:
-    #     line = f.readline()
-    #     increment = len(line)
+        starttime = time.time()
+        a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
+        #endtime = time.time() - starttime
+        #print(endtime)
+        #print(a[1])
         
-    #     #print(count)
+        #print(a)
+        d = list(searcher.match_exact_word(a[0], a[1], qList))
+        print(findURL(d, "./FileOutput/urls.txt", 5))
         
-    #     print(line)
-    #     #print("--------")
-    #     count += increment
         
-    #     i += 1
-   
-    # print(i)
+        endtime = time.time()-starttime
+        print(endtime)
+        # f = open("./FileOutput/finalmerged.txt", "r")
+        # i = 0
+        # count = 114925785
+        # f.seek(count)
+        
+        # while count < 119453817:
+        #     line = f.readline()
+        #     increment = len(line)
+            
+        #     #print(count)
+            
+        #     print(line)
+        #     #print("--------")
+        #     count += increment
+            
+        #     i += 1
+    
+        # print(i)
