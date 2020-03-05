@@ -5,6 +5,8 @@ import os
 import json as js
 import time
 import re
+import math
+N = 55000
 stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't",
                  'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
 class search:
@@ -31,41 +33,9 @@ class search:
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
 
-    
-    #it returns a chunk of list from first and second word and ...
-#     def final_search_file(self,finalMerge, bookkeeping, list_word ) -> list:        
-#         data = []# book keeping
-#         str1 = ""
-#         c = []
-#         with open(bookkeeping, "r") as f:
-#             str1 = f.read() 
-#         data = str1.split(" ")
-#         data = list(filter(None, data))   
-#         with open(finalMerge,"r") as marg_file:
-#                     lines = marg_file.readlines()  
-# # m is each word in query
-#         try:
-#             for m in list_word:           
-#                 first_char = m[0]
-#                 # lst has the bookKeeping list
-#                 index = data.index(first_char)
-#                 start =  data[index+1]
-#                 end = data[index+2]
-#                 start_index = int(start)
-#                 end_index = int(end)            
-#                 c.extend(lines[start_index:end_index:1])
-#         except:
-#             pass
-#         return c
-#         """ 
-#         come up with a better serach algorithem
-#         """
-    # def match_exact_query(self,sameCharacterWordList, qList):
-    #     i = 0
-    #     docIDList = []
-    #     for s in sameCharacterWordList:            
-    #         token = list(eval(s).keys())[0]
-
+    # This function returns all the tokens with the same first character as the query words
+   # return a tuple: documents as a list of string, each string contains one line (token + postings) in the final merged file
+   # keyList: list of the tokens
     def final_search_file(self, finalMerge, bookkeeping, list_word : 'list') -> list:
         startTime = time.time()
         print("in final search")
@@ -113,33 +83,20 @@ class search:
                 
                 
                 keyList.append(line[2:sizeWord+2])
-                #print(key)
-                #print(line[2:len(m)])
-                # if key == m:
-                #     print(key)
-                #     docIDDict = d[key]
-                #     for docID in docIDDict:
-                #         documents.append(docID)
-                    
-                #     break
+                
         print("done with final search", time.time() - startTime, "\n")
         return documents, keyList
+    
     def match_exact_word(self, documents, keyList, qList):
         #print(keyList)
         documentIDList = []
-        # print("start key list")
-        # for d in documents:
-            
-        #     l = eval(d)
-            
-        #     key = list(l.keys())[0]
-        #     keyList.append(key)
-        # print("end key list")
+        query_word_posting = []
         for q in qList:
             
             i = BinSearch(keyList, q)
             #i = keyList.index(q)
             if (i > 1):
+                query_word_posting.append(documents[i])
                 start = time.time()
                 l = eval(documents[i])
                 #print(l)
@@ -147,13 +104,43 @@ class search:
                 documentIDList.extend(list(l[key].keys()))
                 #key = 
                 #print(eval)
-                
+        tf_idf(query_word_posting)
         if (len(qList) > 1):
             
             
             return duplicates_helper(documentIDList)
         return documentIDList
 
+# this function return a list of token_document_dict for all the query words
+# each query word has a vector (tf-idf score for doc1, tfidf score score for doc 2, etc)
+# this vector is token_document_dict {doc1: tf-idf score, doc2: tf-idf score, ...}
+
+def tf_idf(query_word_posting):
+    for q in query_word_posting:
+        token_document_dict = {}
+        q = q.split()
+            
+        i = 1
+        # for z in q:
+        #     print(z)
+        
+        doc_id_index = 1
+        tf_index = 2
+        df = (len(q) - 1)//3
+        
+        
+        while doc_id_index < len(q):
+            tf = int(q[tf_index].replace("[", "").replace(",", ""))
+            
+            token_document_dict[q[doc_id_index]] = (1+math.log(tf))*math.log(N/df)
+
+            doc_id_index+=3
+            tf_index += 3
+            df += 1
+
+        #print(token_document_dict[0:10])
+        print("\n*******  ",q[0], "appears in ", df, "documents\n")
+    
 def BinSearch(a, x):
     i = bisect_left(a, x)
     if i != len(a) and a[i] == x:
@@ -169,27 +156,15 @@ def findURL(docIDResults, URLFile, limit):
         start = time.time()
         dictionaryList = dictionary.split()
         i = 0
-        # while i < len(dictionaryList):
-            
-        #     n = len(dictionaryList[i])
-        #     dictionaryList[i] = dictionaryList[i][0:n-1]
-            
-        #     i += 2
-        print("End find URL", time.time() - start, "\n")
+        
+        
         for d in docIDResults:
             URL.append(dictionaryList[d*2+1])
         
-        # for d in dictionaryList:
-        #     print(d)
-        #print("start find URL")
-        # for docID in docIDResults:
-        #     URL.append(eval(dictionary)[docID])
-        #     if (i >= 4):
-        #         break
-        #     i += 1  
         
-        #print(documents)
+        print("End find URL", time.time() - start, "\n")
         return URL
+
 def duplicates_helper(docIDList):
     #print(docIDList)
     print("in duplicate")
@@ -206,41 +181,21 @@ if __name__ == "__main__":
     while True:
         qList = searcher.readSearchQuery()
     
-    
+        print("\n")
         starttime = time.time()
         a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
-        #endtime = time.time() - starttime
-        #print(endtime)
-        #print(a[1])
         
-        #print(a)
         d = list(searcher.match_exact_word(a[0], a[1], qList))
         URL = findURL(d, "./FileOutput/urls.txt", 5)
         
         
         endtime = time.time()-starttime
-        print("************\nTotal = ", endtime)
+        print("------------\nTotal = ", endtime)
 
         i = 0
+        print("\n************  SEARCH RESULTS   ************* \n\n")
         for u in URL:
             if (i < 5):
-                print(u)
+                print(u, "\n")
             i+=1
-        # f = open("./FileOutput/finalmerged.txt", "r")
-        # i = 0
-        # count = 114925785
-        # f.seek(count)
         
-        # while count < 119453817:
-        #     line = f.readline()
-        #     increment = len(line)
-            
-        #     #print(count)
-            
-        #     print(line)
-        #     #print("--------")
-        #     count += increment
-            
-        #     i += 1
-    
-        # print(i)
