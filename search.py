@@ -6,6 +6,9 @@ import json as js
 import time
 import re
 import math
+import threading
+import queue
+lock = threading.Lock()
 N = 55000
 stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't",
                  'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
@@ -33,6 +36,16 @@ class search:
     def removeNonAscii(self, s):
         return "".join(i for i in s if ord(i) < 128)
 
+    def create_bookeeper(self, bookkeeping_path):
+        lst = []
+        with open(bookkeeping_path, "r") as final_m:
+            data = final_m.read()
+            # add this to a list of pookkeeping
+            lst = data.split()
+        return lst
+
+
+    '''
     # This function returns all the tokens with the same first character as the query words
    # return a tuple: documents as a list of string, each string contains one line (token + postings) in the final merged file
    # keyList: list of the tokens
@@ -86,30 +99,30 @@ class search:
                 
         print("done with final search", time.time() - startTime, "\n")
         return documents, keyList
-    
-    def match_exact_word(self, documents, keyList, qList):
-        #print(keyList)
-        documentIDList = []
-        query_word_posting = []
-        for q in qList:
-            
-            i = BinSearch(keyList, q)
-            #i = keyList.index(q)
-            if (i > 1):
-                query_word_posting.append(documents[i])
-                start = time.time()
-                l = eval(documents[i])
-                #print(l)
-                key = list(l.keys())[0]
-                documentIDList.extend(list(l[key].keys()))
-                #key = 
-                #print(eval)
-        tf_idf(query_word_posting)
-        if (len(qList) > 1):
-            
-            
-            return duplicates_helper(documentIDList)
-        return documentIDList
+'''
+def match_exact_word(documents, keyList, word, queue):
+    #print(keyList)
+    documentIDList = []
+    query_word_posting = []
+    #for q in qList:
+
+    i = BinSearch(keyList, word)
+    print("binsearch i ", i)
+    #i = keyList.index(q)
+    if (i > 1):
+        query_word_posting.append(documents[i])
+        start = time.time()
+        l = eval(documents[i])
+        #print(l)
+        key = list(l.keys())[0]
+        documentIDList.extend(list(l[key].keys()))
+        #key =
+        #print(eval)
+    tf_idf(query_word_posting)
+    print(len(documentIDList))
+    queue.put(documentIDList)
+    return documentIDList
+
 
 # this function return a list of token_document_dict for all the query words
 # each query word has a vector (tf-idf score for doc1, tfidf score score for doc 2, etc)
@@ -175,9 +188,105 @@ def duplicates_helper(docIDList):
             duplicates.add(item)
     print("done with duplicate", time.time() - start, "\n")
     return duplicates
+
+
+def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
+    startTime = time.time()
+    print("in final search")
+    data = []
+    # book keeping
+    # print(lst)
+    #final_marg = open(finalMerge, "r")
+    lock.acquire()
+    with open(finalMerge, "r") as final_marg:
+        # m is the word
+        first_char = word[0]
+        start = 0
+        end = 0
+        if first_char in bookkeeping:
+            # print(first_char)
+            ind = bookkeeping.index(first_char)
+            # print(ind)
+            start = int(bookkeeping[ind + 1])
+            end = int(bookkeeping[ind + 2])
+        final_marg.seek(start)
+        count = start
+        sizeWord = len(word)
+        documents = []
+        keyList = []
+        while count < end:
+            line = final_marg.readline()
+            if line == "":
+                break
+
+            # print(line)
+            count += len(line)
+            documents.append(line.strip())
+            # l = eval(line)
+            # key = list(l.keys())[0]
+            keyList.append(line[2:sizeWord + 2])
+            #print(keyList)
+        print(keyList)
+    print("done with final search", time.time() - startTime, "\n")
+    queue.put((documents,keyList,word))
+    lock.release()
+    return documents, keyList
+
+
 if __name__ == "__main__":
     
     searcher = search()
+    qList = searcher.readSearchQuery()
+    qList.sort()
+    starttime = time.time()
+    book = searcher.create_bookeeper("./FileOutput/bookkeeping.txt")
+
+    que = queue.Queue()
+    thread_list = []
+    for word in qList:
+        thread = threading.Thread(target=final_search_file, args=(book, "./FileOutput/finalmerged.txt",word,que))
+        thread_list.append(thread)
+    for thread in thread_list:
+        thread.start()
+    for thread in thread_list:
+        thread.join()
+
+    thread_list.clear()
+    #counter = 0
+    docIDqueue = queue.Queue()
+    while not que.empty():
+        result = que.get()
+        print("result: ", len(result[0]))
+        print("result key ", result[1])
+        print(result[2])
+        thread = threading.Thread(target=match_exact_word, args=(result[0], result[1], result[2], docIDqueue))
+        thread_list.append(thread)
+        #counter+=1
+    for thread in thread_list:
+        thread.start()
+    for thread in thread_list:
+        thread.join()
+
+    docIDlist = []
+    while not docIDqueue.empty():
+        docids = docIDqueue.get()
+        print(docids)
+        docIDlist.extend(docids)
+    dups = duplicates_helper(docIDlist)
+    URL = findURL(dups, "./FileOutput/urls.txt", 5)
+
+    endtime = time.time() - starttime
+    print("------------\nTotal = ", endtime)
+
+    i = 0
+    print("\n************  SEARCH RESULTS   ************* \n\n")
+    for u in URL:
+        if (i < 5):
+            print(u, "\n")
+        i += 1
+
+
+    '''
     while True:
         qList = searcher.readSearchQuery()
     
@@ -198,4 +307,6 @@ if __name__ == "__main__":
             if (i < 5):
                 print(u, "\n")
             i+=1
+            
+    '''
         
