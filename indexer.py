@@ -159,53 +159,42 @@ class Indexer:
 
 
 def makeBookkeeping(finalMerge, bk):
-    newCharacter = False
+
+
     with open(bk, "w") as bookKeeping:
         read_file = open(finalMerge, "r")
         count = 0
-        bookKeeping.write("# " + str(count) + " ")
-        bookKeeping.close()
-  
-    with open(bk, "a+") as bookKeeping:
-        while True:
-            line = read_file.readline()
-            count += 1
-            tokenDict = eval(line.strip())
-            token = list(tokenDict.keys())[0]
-            #print(token.isdigit())
-            print(token[0].isdigit())
-            if (token[0].isdigit() == False):
-                
-                bookKeeping.write(str(count-1) + " ")
-                bookKeeping.write(token[0] + " " + str(count) + " ")
-                break
-    
+
+        line = read_file.readline()
+
+        character = (line.split()[0])[0]
+        bookKeeping.write(character + " " + str(count) + " ")
         newCharacter = False
-        character = token[0]
+        count += len(line)
         while True:
-            
+
             line = read_file.readline()
             if (line == ""):
-                bookKeeping.write(str(count-1) + " ")
+                bookKeeping.write(str(count) + " ")
                 break
-            tokenDict = eval(line.strip())
-            token = list(tokenDict.keys())[0]
-            print(character)
-            
-            if (token[0] != character):
+
+
+            #print(character)
+
+            if (line.split()[0][0] != character):
                 newCharacter = True
             else:
                 newCharacter = False
 
-            
-                
+
+
             if (newCharacter == True):
-                bookKeeping.write(str(count-1) + " ")
-                character = token[0]
-                bookKeeping.write(token[0] + " " + str(count) + " ")
-            count += 1
-                
-            
+                bookKeeping.write(str(count) + " ")
+                character = line.split()[0][0]
+                bookKeeping.write(line.split()[0][0] + " " + str(count) + " ")
+            count += len(line)
+
+
     read_file.close()
 
 def merge(file1, file2, writefile):
@@ -294,12 +283,25 @@ def tokenizer(text : "str") -> list:
 if __name__ == "__main__":
     # indexer = Indexer()
     # indexer.indexer_main()
-    makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
+    #makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
     #merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
     #merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
     #merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
     #merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
     #merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+    count = 78385471
+    final_marg = open("./FileOutput/finalmerged.txt", "r")
+    end = 89921610
+    final_marg.seek(count)
+    while count < end:
+        line = final_marg.readline()
+        if line == "":
+            break
+
+        print(line)
+        count += len(line)
+    final_marg.close()
+
 
 

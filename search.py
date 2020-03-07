@@ -1,6 +1,6 @@
 from nltk.stem import PorterStemmer
 from bisect import bisect_left
-import time
+from operator import itemgetter
 import os
 import json as js
 import time
@@ -12,6 +12,23 @@ lock = threading.Lock()
 N = 55000
 stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't",
                  'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
+
+def sort_my_dict(d, limit):
+    i = 0
+    results = []
+    for k in sorted(d, key=d.get, reverse=False):
+        if (i < limit):
+            results.append(k)
+        else:
+            break
+        i += 1
+    return results
+def cosine_sim(query_vector, doc_vector_dict):
+    docID_cosine_dict = {}
+    for key, value in doc_vector_dict.items():
+        docID_cosine_dict[key] = multiply_vectors(query_vector,value)
+    return docID_cosine_dict
+
 class search:
     def __init__(self):
         self.stemmer = PorterStemmer()
@@ -74,51 +91,108 @@ def match_exact_word(documents, keyList, word, queue):
 # this vector is token_document_dict {doc1: tf-idf score, doc2: tf-idf score, ...}
 
 def tf_idf(query_word_posting):
+    td_dict_list = []
+    query_vector = []
+
     for q in query_word_posting:
         token_document_dict = {}
         q = q.split()
-            
+
         i = 1
         # for z in q:
         #     print(z)
-        
+
         doc_id_index = 1
         tf_index = 2
-        df = (len(q) - 1)//3
-        
-        
+        df = (len(q) - 1) // 3
+
         while doc_id_index < len(q):
-            tf = int(q[tf_index].replace("[", "").replace(",", ""))
-            
-            token_document_dict[q[doc_id_index]] = (1+math.log(tf))*math.log(N/df)
+            tf = int(q[tf_index])
 
-            doc_id_index+=3
+            token_document_dict[q[doc_id_index]] = [(1 + math.log(tf)) * math.log(N / df)]
+
+            doc_id_index += 3
             tf_index += 3
-            df += 1
 
-        #print(token_document_dict[0:10])
-        print("\n*******  ",q[0], "appears in ", df, "documents\n")
-    
+        td_dict_list.append(token_document_dict)
+        query_vector.append(math.log(N / df))
+
+        print("\n*******  ", q[0], "appears in ", df, "documents\n")
+    print(td_dict_list)
+
+    return td_dict_list, query_vector
+
+
+def normalize(vectorL):
+    denom = 0
+    results = []
+    for ax in vectorL:
+        denom += (ax * ax)
+
+    for ax in vectorL:
+        results.append(ax / math.sqrt(denom))
+
+    return results
+
+
+
+def makeDocumentVector(td_dict_list):
+    total_dict = td_dict_list[0]
+    for key, value in total_dict.items():
+
+        for i in range(len(td_dict_list) - 1):
+            total_dict[key].append(0)
+    # print(total_dict)
+    k = 1
+    print("leng dict list", len(td_dict_list))
+    while k < len(td_dict_list):
+        print("k = ", k)
+        for key, value in td_dict_list[k].items():
+            if key not in total_dict:
+                total_dict[key] = []
+                for i in range(len(td_dict_list)):
+                    total_dict[key].append(0)
+
+                total_dict[key][k] = int(value[0])
+            else:
+                total_dict[key][k] = int(value[0])
+
+                # print(len(value))
+
+        k += 1
+
+    print(total_dict)
+    return total_dict
+
+
+def multiply_vectors(v1, v2):
+    if (len(v1) != len(v2)):
+        return "cannot multiply. different vectors length"
+    results = 0
+    for i in range(len(v1)):
+        results += v1[i] * v2[i]
+    return results
+
+
 def BinSearch(a, x):
     i = bisect_left(a, x)
     if i != len(a) and a[i] == x:
         return i
     else:
         return -1
-def findURL(docIDResults, URLFile, limit):
+
+
+def findURL(docIDResults, URLFile):
     print("in find URL")
     read_file = open(URLFile, "r")
     dictionary = read_file.read()
-    i = 0
+
     URL = []
     start = time.time()
     dictionaryList = dictionary.split()
-    i = 0
-
 
     for d in docIDResults:
-        URL.append(dictionaryList[d*2+1])
-
+        URL.append(dictionaryList[int(d) * 2 + 1])
 
     print("End find URL", time.time() - start, "\n")
     return URL
@@ -135,7 +209,7 @@ def duplicates_helper(docIDList):
     return duplicates
 
 
-def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
+def final_search_file(bookkeeping, finalMerge, word, queue) -> list:
     startTime = time.time()
     print("in final search")
 
@@ -166,22 +240,22 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
             count += len(line)
 
             #print(line)
-            if line[2:sizeWord + 2] == word:
-                l = eval(line.strip())
+            if line[:sizeWord] == word:
+                #l = eval(line.strip())
                 # print(l)
-                key = list(l.keys())[0]
-                tf_idf([line.strip()])
-                documentIDList.extend(list(l[key].keys()))
-                queue.put((l, documentIDList))
+                #key = list(l.keys())[0]
+                queue.put(line.strip())
+                #documentIDList.extend(list(l[key].keys()))
+                #queue.put((l, documentIDList))
                 #lock.release()
                 print("done with final search", time.time() - startTime, "\n")
-                return l, documentIDList
+                return line.strip()#l, documentIDList
             #print(keyList)
         #print(keyList)
     print("cannot find word", time.time() - startTime, "\n")
-    queue.put(("", []))
+    queue.put("")
     #lock.release()
-    return "", []
+    return ""
 
 
 if __name__ == "__main__":
@@ -190,12 +264,12 @@ if __name__ == "__main__":
     qList = searcher.readSearchQuery()
     qList.sort()
     starttime = time.time()
-    book = searcher.create_bookeeper("./FileOutput/bookkeeping.txt")
+    book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
 
     que = queue.Queue()
     thread_list = []
     for word in qList:
-        thread = threading.Thread(target=final_search_file, args=(book, "./FileOutput/finalmerged.txt",word,que))
+        thread = threading.Thread(target=final_search_file, args=(book, "./FileOutput/finalmerged(1).txt",word,que))
         thread_list.append(thread)
     for thread in thread_list:
         thread.start()
@@ -219,14 +293,22 @@ if __name__ == "__main__":
     for thread in thread_list:
         thread.join()
     '''
-    docIDlist = []
+    query_word_posting = []
     while not que.empty():
-        docids = que.get()
-        print(docids[0])
-        docIDlist.extend(docids[1])
-    dups = duplicates_helper(docIDlist)
-    print(len(dups))
-    URL = findURL(dups, "./FileOutput/urls.txt", 5)
+        posting = que.get()
+        print(posting)
+        query_word_posting.append(posting)
+    print(len(query_word_posting))
+    tf_idf_thing = tf_idf(query_word_posting)
+    td_dict_list = tf_idf_thing[0]
+    query_vector = normalize(tf_idf_thing[1])
+    d_vector_dict = makeDocumentVector(td_dict_list)
+    for doc_vector in d_vector_dict.values():
+        doc_vector = normalize(doc_vector)
+    cosine_vector = cosine_sim(query_vector, d_vector_dict)
+    d = sort_my_dict(cosine_vector, 5)
+
+    URL = findURL(d, "./FileOutput/urls.txt")
 
     endtime = time.time() - starttime
     print("------------\nTotal = ", endtime)
