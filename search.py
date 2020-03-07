@@ -44,62 +44,6 @@ class search:
             lst = data.split()
         return lst
 
-
-    '''
-    # This function returns all the tokens with the same first character as the query words
-   # return a tuple: documents as a list of string, each string contains one line (token + postings) in the final merged file
-   # keyList: list of the tokens
-    def final_search_file(self, finalMerge, bookkeeping, list_word : 'list') -> list:
-        startTime = time.time()
-        print("in final search")
-        data= []
-        lst = [] # book keeping
-        documents = []
-        keyList = []
-        with open(bookkeeping, "r") as final_m:
-            data = final_m.read()
-            # add this to a list of pookkeeping
-            lst = data.split()
-        #print(lst)
-        final_marg = open(finalMerge,"r")
-        list_word.sort()
-        for m in list_word:
-            # m is the word
-            final_marg.seek(0)
-            first_char = m[0]
-            start = 0
-            end = 0
-            if first_char in lst:
-                #print(first_char)
-                ind = lst.index(first_char)
-                #print(ind)
-                start = int(lst[ind+1])
-                end = int(lst[ind+2])
-            
-            
-            final_marg.seek(start)
-            count = start
-            sizeWord = len(m)
-            
-            
-            while count < end:
-                line = final_marg.readline()
-                if line == "":
-                    break
-
-                # print(line)
-                count += len(line)
-                documents.append(line.strip())
-                # l = eval(line)
-            
-                # key = list(l.keys())[0]
-                
-                
-                keyList.append(line[2:sizeWord+2])
-                
-        print("done with final search", time.time() - startTime, "\n")
-        return documents, keyList
-'''
 def match_exact_word(documents, keyList, word, queue):
     #print(keyList)
     documentIDList = []
@@ -111,6 +55,7 @@ def match_exact_word(documents, keyList, word, queue):
     #i = keyList.index(q)
     if (i > 1):
         query_word_posting.append(documents[i])
+        print("query word: ", documents[i])
         start = time.time()
         l = eval(documents[i])
         #print(l)
@@ -161,22 +106,22 @@ def BinSearch(a, x):
     else:
         return -1
 def findURL(docIDResults, URLFile, limit):
-        print("in find URL")
-        read_file = open(URLFile, "r")
-        dictionary = read_file.read()
-        i = 0
-        URL = []
-        start = time.time()
-        dictionaryList = dictionary.split()
-        i = 0
-        
-        
-        for d in docIDResults:
-            URL.append(dictionaryList[d*2+1])
-        
-        
-        print("End find URL", time.time() - start, "\n")
-        return URL
+    print("in find URL")
+    read_file = open(URLFile, "r")
+    dictionary = read_file.read()
+    i = 0
+    URL = []
+    start = time.time()
+    dictionaryList = dictionary.split()
+    i = 0
+
+
+    for d in docIDResults:
+        URL.append(dictionaryList[d*2+1])
+
+
+    print("End find URL", time.time() - start, "\n")
+    return URL
 
 def duplicates_helper(docIDList):
     #print(docIDList)
@@ -193,11 +138,8 @@ def duplicates_helper(docIDList):
 def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
     startTime = time.time()
     print("in final search")
-    data = []
-    # book keeping
-    # print(lst)
-    #final_marg = open(finalMerge, "r")
-    lock.acquire()
+
+    #lock.acquire()
     with open(finalMerge, "r") as final_marg:
         # m is the word
         first_char = word[0]
@@ -214,6 +156,7 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
         sizeWord = len(word)
         documents = []
         keyList = []
+        documentIDList = []
         while count < end:
             line = final_marg.readline()
             if line == "":
@@ -221,16 +164,24 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
 
             # print(line)
             count += len(line)
-            documents.append(line.strip())
-            # l = eval(line)
-            # key = list(l.keys())[0]
-            keyList.append(line[2:sizeWord + 2])
+
+            #print(line)
+            if line[2:sizeWord + 2] == word:
+                l = eval(line.strip())
+                # print(l)
+                key = list(l.keys())[0]
+                tf_idf([line.strip()])
+                documentIDList.extend(list(l[key].keys()))
+                queue.put((l, documentIDList))
+                #lock.release()
+                print("done with final search", time.time() - startTime, "\n")
+                return l, documentIDList
             #print(keyList)
-        print(keyList)
-    print("done with final search", time.time() - startTime, "\n")
-    queue.put((documents,keyList,word))
-    lock.release()
-    return documents, keyList
+        #print(keyList)
+    print("cannot find word", time.time() - startTime, "\n")
+    queue.put(("", []))
+    #lock.release()
+    return "", []
 
 
 if __name__ == "__main__":
@@ -252,6 +203,7 @@ if __name__ == "__main__":
         thread.join()
 
     thread_list.clear()
+    '''
     #counter = 0
     docIDqueue = queue.Queue()
     while not que.empty():
@@ -266,13 +218,14 @@ if __name__ == "__main__":
         thread.start()
     for thread in thread_list:
         thread.join()
-
+    '''
     docIDlist = []
-    while not docIDqueue.empty():
-        docids = docIDqueue.get()
-        print(docids)
-        docIDlist.extend(docids)
+    while not que.empty():
+        docids = que.get()
+        print(docids[0])
+        docIDlist.extend(docids[1])
     dups = duplicates_helper(docIDlist)
+    print(len(dups))
     URL = findURL(dups, "./FileOutput/urls.txt", 5)
 
     endtime = time.time() - starttime
