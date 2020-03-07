@@ -39,6 +39,7 @@ class search:
         queryList = []
         for q in query:
             queryList.append(self.stemmer.stem(q.lower()))
+        print(queryList)
 
         return queryList
 
@@ -81,7 +82,7 @@ def match_exact_word(documents, keyList, word, queue):
         #key =
         #print(eval)
     tf_idf(query_word_posting)
-    print(len(documentIDList))
+    #print(len(documentIDList))
     queue.put(documentIDList)
     return documentIDList
 
@@ -117,8 +118,8 @@ def tf_idf(query_word_posting):
         td_dict_list.append(token_document_dict)
         query_vector.append(math.log(N / df))
 
-        print("\n*******  ", q[0], "appears in ", df, "documents\n")
-    print(td_dict_list)
+       # print("\n*******  ", q[0], "appears in ", df, "documents\n")
+    #print(td_dict_list)
 
     return td_dict_list, query_vector
 
@@ -144,9 +145,9 @@ def makeDocumentVector(td_dict_list):
             total_dict[key].append(0)
     # print(total_dict)
     k = 1
-    print("leng dict list", len(td_dict_list))
+    #print("leng dict list", len(td_dict_list))
     while k < len(td_dict_list):
-        print("k = ", k)
+        #print("k = ", k)
         for key, value in td_dict_list[k].items():
             if key not in total_dict:
                 total_dict[key] = []
@@ -161,7 +162,7 @@ def makeDocumentVector(td_dict_list):
 
         k += 1
 
-    print(total_dict)
+    #print(total_dict)
     return total_dict
 
 
@@ -209,7 +210,7 @@ def duplicates_helper(docIDList):
     return duplicates
 
 
-def final_search_file(bookkeeping, finalMerge, word, queue) -> list:
+def final_search_file(bookkeeping, finalMerge, word, queue) -> str:
     startTime = time.time()
     print("in final search")
 
@@ -259,66 +260,69 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> list:
 
 
 if __name__ == "__main__":
-    
-    searcher = search()
-    qList = searcher.readSearchQuery()
-    qList.sort()
-    starttime = time.time()
-    book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
+    while(True):
+        searcher = search()
+        qList = searcher.readSearchQuery()
+        qList.sort()
+        # q to quit
+        if qList[0] == "q":
+            break
+        starttime = time.time()
+        book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
 
-    que = queue.Queue()
-    thread_list = []
-    for word in qList:
-        thread = threading.Thread(target=final_search_file, args=(book, "./FileOutput/finalmerged(1).txt",word,que))
-        thread_list.append(thread)
-    for thread in thread_list:
-        thread.start()
-    for thread in thread_list:
-        thread.join()
+        que = queue.Queue()
+        thread_list = []
+        for word in qList:
+            thread = threading.Thread(target=final_search_file, args=(book, "./FileOutput/finalmerged(1).txt",word,que))
+            thread_list.append(thread)
+        for thread in thread_list:
+            thread.start()
+        for thread in thread_list:
+            thread.join()
 
-    thread_list.clear()
-    '''
-    #counter = 0
-    docIDqueue = queue.Queue()
-    while not que.empty():
-        result = que.get()
-        print("result: ", len(result[0]))
-        print("result key ", result[1])
-        print(result[2])
-        thread = threading.Thread(target=match_exact_word, args=(result[0], result[1], result[2], docIDqueue))
-        thread_list.append(thread)
-        #counter+=1
-    for thread in thread_list:
-        thread.start()
-    for thread in thread_list:
-        thread.join()
-    '''
-    query_word_posting = []
-    while not que.empty():
-        posting = que.get()
-        print(posting)
-        query_word_posting.append(posting)
-    print(len(query_word_posting))
-    tf_idf_thing = tf_idf(query_word_posting)
-    td_dict_list = tf_idf_thing[0]
-    query_vector = normalize(tf_idf_thing[1])
-    d_vector_dict = makeDocumentVector(td_dict_list)
-    for doc_vector in d_vector_dict.values():
-        doc_vector = normalize(doc_vector)
-    cosine_vector = cosine_sim(query_vector, d_vector_dict)
-    d = sort_my_dict(cosine_vector, 5)
+        thread_list.clear()
+        '''
+        #counter = 0
+        docIDqueue = queue.Queue()
+        while not que.empty():
+            result = que.get()
+            print("result: ", len(result[0]))
+            print("result key ", result[1])
+            print(result[2])
+            thread = threading.Thread(target=match_exact_word, args=(result[0], result[1], result[2], docIDqueue))
+            thread_list.append(thread)
+            #counter+=1
+        for thread in thread_list:
+            thread.start()
+        for thread in thread_list:
+            thread.join()
+        '''
+        query_word_posting = []
+        while not que.empty():
+            posting = que.get()
+            #print(posting)
+            query_word_posting.append(posting)
+        #print(len(query_word_posting))
+        tf_idf_thing = tf_idf(query_word_posting)
+        td_dict_list = tf_idf_thing[0]
+        query_vector = normalize(tf_idf_thing[1])
+        d_vector_dict = makeDocumentVector(td_dict_list)
+        for doc_vector in d_vector_dict.values():
+            doc_vector = normalize(doc_vector)
+        cosine_vector = cosine_sim(query_vector, d_vector_dict)
+        d = sort_my_dict(cosine_vector, 5)
 
-    URL = findURL(d, "./FileOutput/urls.txt")
+        URL = findURL(d, "./FileOutput/urls.txt")
 
-    endtime = time.time() - starttime
-    print("------------\nTotal = ", endtime)
+        endtime = time.time() - starttime
+        print("------------\nTotal = ", endtime)
 
-    i = 0
-    print("\n************  SEARCH RESULTS   ************* \n\n")
-    for u in URL:
-        if (i < 5):
-            print(u, "\n")
-        i += 1
+        i = 0
+        print("\n************  SEARCH RESULTS   ************* \n\n")
+        for u in URL:
+            if (i < 5):
+                print(u, "\n")
+            i += 1
 
 
     '''
