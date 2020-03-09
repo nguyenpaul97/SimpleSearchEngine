@@ -33,12 +33,12 @@ class search:
     def __init__(self):
         self.stemmer = PorterStemmer()
 
-    def readSearchQuery(self):
-        query = input("search query : ")
+    def readSearchQuery(self, query):
         query = set(self.tokenizer(query)) - set(stop_words)
         queryList = []
         for q in query:
-            queryList.append(self.stemmer.stem(q.lower()))
+            if not q.isdigit():
+                queryList.append(self.stemmer.stem(q.lower()))
         print(queryList)
 
         return queryList
@@ -91,11 +91,11 @@ def match_exact_word(documents, keyList, word, queue):
 # each query word has a vector (tf-idf score for doc1, tfidf score score for doc 2, etc)
 # this vector is token_document_dict {doc1: tf-idf score, doc2: tf-idf score, ...}
 
-def tf_idf(query_word_posting):
+def tf_idf(word_posting):
     td_dict_list = []
     query_vector = []
 
-    for q in query_word_posting:
+    for q in word_posting:
         token_document_dict = {}
         q = q.split()
 
@@ -111,7 +111,6 @@ def tf_idf(query_word_posting):
         while doc_id_index < len(q):
             tf = int(q[tf_index])
             weight = int(q[weight_index])
-            
 
             token_document_dict[q[doc_id_index]] = [(1 + math.log(tf)) * math.log(N / df)+ weight]
 
@@ -229,6 +228,18 @@ def add_dups(docIDList):
     return merged_list
 
 
+def calculate_tfidf_cosine(word_posting_list):
+    tf_idf_thing = tf_idf(word_posting_list)
+    td_dict_list = tf_idf_thing[0]
+    query_vector = normalize(tf_idf_thing[1])
+    d_vector_dict = makeDocumentVector(td_dict_list)
+    for id, doc_vector in d_vector_dict.items():
+        doc_vector = normalize(doc_vector)
+        d_vector_dict[id] = doc_vector
+    cosine_vector = cosine_sim(query_vector, d_vector_dict)
+    return cosine_vector
+
+
 def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
     startTime = time.time()
     #print("in final search")
@@ -280,8 +291,7 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
                 return (line.strip(), doc_set)#l, documentIDList
             #print(keyList)
         #print(keyList)
-    print("cannot find word", time.time() - startTime, "\n")
-    queue.put(("",set()))
+    print("cannot find word ", word, "\n")
     #lock.release()
     return "", set()
 
@@ -289,14 +299,17 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
 if __name__ == "__main__":
     searchQueries = ['master of electrical engineering', 'Computer Science', 'uci artificial intelligence and machine learning',
                      '']
-
+    print("Enter nothing to quit")
+    searcher = search()
     while(True):
-        searcher = search()
-        qList = searcher.readSearchQuery()
-        qList.sort()
-        # q to quit
-        if qList[0] == "q":
+        query = input("search query : ")
+        if query == "":
             break
+        qList = searcher.readSearchQuery(query)
+        if len(qList) == 0:
+            print("No valid query tokens. Could not find any results. Try again.")
+            continue
+        qList.sort()
         starttime = time.time()
         book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
 
@@ -336,45 +349,26 @@ if __name__ == "__main__":
             query_word_posting.append(posting[0])
             query_doc_setlist.append(posting[1])
 
+        if len(query_word_posting) == 0:
+            print("No valid tokens, please try again")
+            continue
+
         merged_doc_set = add_dups(query_doc_setlist)
-        '''
-        setlist_ind = 1
-        merged_doc_set = set()
-        while setlist_ind < len(query_doc_setlist):
-            if len(merged_doc_set) == 0:
-                merged_doc_set = query_doc_setlist[setlist_ind-1].intersection(query_doc_setlist[setlist_ind])
-                setlist_ind+=1
-            else:
-                merged_doc_set = merged_doc_set.intersection(query_doc_setlist[setlist_ind])
-                setlist_ind+=1
-        if len(merged_doc_set) == 0:
-            merged_doc_set = query_doc_setlist[0]
-        print("merged docs: ",merged_doc_set)
-        '''
+        cosine_vector = calculate_tfidf_cosine(query_word_posting)
         #print(len(query_word_posting))
-        tf_idf_thing = tf_idf(query_word_posting)
-        td_dict_list = tf_idf_thing[0]
-        query_vector = normalize(tf_idf_thing[1])
-        d_vector_dict = makeDocumentVector(td_dict_list)
-        for id, doc_vector in d_vector_dict.items():
-            doc_vector = normalize(doc_vector)
-            d_vector_dict[id] = doc_vector
-        cosine_vector = cosine_sim(query_vector, d_vector_dict)
-        #print(cosine_vector)
 
         cosine_vector_keys = set(int(i) for i in cosine_vector.keys())
         final_doc_set = merged_doc_set.intersection(cosine_vector_keys)
         new_cos_vector = dict()
         for id in final_doc_set:
             new_cos_vector[id] = cosine_vector[str(id)]
-        print("final dict: ", new_cos_vector)
 
-        d = sort_my_dict(new_cos_vector, 5)
+        d = sort_my_dict(new_cos_vector, 10)
 
         URL = findURL(d, "./FileOutput/urls.txt")
 
         endtime = time.time() - starttime
-        print("------------\nTotal = ", endtime)
+        print("------------\nTotal Time Elapsed = ", endtime)
 
         i = 0
         print("\n************  SEARCH RESULTS   ************* \n\n")
