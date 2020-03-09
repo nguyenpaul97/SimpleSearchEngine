@@ -113,7 +113,7 @@ def tf_idf(query_word_posting):
             weight = int(q[weight_index])
             
 
-            token_document_dict[q[doc_id_index]] = [(1 + math.log(tf)) * math.log(N / df)] + weight
+            token_document_dict[q[doc_id_index]] = [(1 + math.log(tf)) * math.log(N / df)+ weight]
 
             doc_id_index += 3
             tf_index += 3
@@ -187,35 +187,50 @@ def BinSearch(a, x):
 
 
 def findURL(docIDResults, URLFile):
-    print("in find URL")
+    #print("in find URL")
     read_file = open(URLFile, "r")
     dictionary = read_file.read()
 
     URL = []
-    start = time.time()
+    #start = time.time()
     dictionaryList = dictionary.split()
 
     for d in docIDResults:
         URL.append(dictionaryList[int(d) * 2 + 1])
 
-    print("End find URL", time.time() - start, "\n")
+    #print("End find URL", time.time() - start, "\n")
     return URL
 
 def duplicates_helper(docIDList):
     #print(docIDList)
-    print("in duplicate")
-    start = time.time()
+    #print("in duplicate")
+    #start = time.time()
     duplicates = set()
     for item in docIDList:
         if docIDList.count(item) > 1:
             duplicates.add(item)
-    print("done with duplicate", time.time() - start, "\n")
+    #print("done with duplicate", time.time() - start, "\n")
     return duplicates
 
+def add_dups(docIDList):
+    setlist_ind = 1
+    merged_list = set()
+    while setlist_ind < len(docIDList):
+        if len(merged_list) == 0:
+            merged_list = docIDList[setlist_ind - 1].intersection(docIDList[setlist_ind])
+            setlist_ind += 1
+        else:
+            merged_list = merged_list.intersection(docIDList[setlist_ind])
+            setlist_ind += 1
+    if len(merged_list) == 0:
+        merged_list = docIDList[0]
+    #print("merged docs: ", merged_list)
+    return merged_list
 
-def final_search_file(bookkeeping, finalMerge, word, queue) -> str:
+
+def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
     startTime = time.time()
-    print("in final search")
+    #print("in final search")
 
     #lock.acquire()
     with open(finalMerge, "r") as final_marg:
@@ -245,24 +260,35 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> str:
 
             #print(line)
             if line[:sizeWord] == word:
+                #print(line.split())
+                word_line = line.split()
+                ind = 1
+                doc_set = set()
+                while(ind < len(word_line)):
+                    doc_set.add(int(word_line[ind]))
+                    ind+=3
+                #print(doc_set)
                 #l = eval(line.strip())
                 # print(l)
                 #key = list(l.keys())[0]
-                queue.put(line.strip())
+                queue.put((line.strip(),doc_set))
                 #documentIDList.extend(list(l[key].keys()))
                 #queue.put((l, documentIDList))
                 #lock.release()
-                print("done with final search", time.time() - startTime, "\n")
-                return line.strip()#l, documentIDList
+                #print("done with final search", time.time() - startTime, "\n")
+                return (line.strip(), doc_set)#l, documentIDList
             #print(keyList)
         #print(keyList)
     print("cannot find word", time.time() - startTime, "\n")
-    queue.put("")
+    queue.put(("",set()))
     #lock.release()
-    return ""
+    return "", set()
 
 
 if __name__ == "__main__":
+    searchQueries = ['master of electrical engineering', 'Computer Science', 'uci artificial intelligence and machine learning',
+                     '']
+
     while(True):
         searcher = search()
         qList = searcher.readSearchQuery()
@@ -301,19 +327,48 @@ if __name__ == "__main__":
             thread.join()
         '''
         query_word_posting = []
+        query_doc_setlist = []
         while not que.empty():
             posting = que.get()
+            #print("posting: ",posting)
             #print(posting)
-            query_word_posting.append(posting)
+            query_word_posting.append(posting[0])
+            query_doc_setlist.append(posting[1])
+
+        merged_doc_set = add_dups(query_doc_setlist)
+        '''
+        setlist_ind = 1
+        merged_doc_set = set()
+        while setlist_ind < len(query_doc_setlist):
+            if len(merged_doc_set) == 0:
+                merged_doc_set = query_doc_setlist[setlist_ind-1].intersection(query_doc_setlist[setlist_ind])
+                setlist_ind+=1
+            else:
+                merged_doc_set = merged_doc_set.intersection(query_doc_setlist[setlist_ind])
+                setlist_ind+=1
+        if len(merged_doc_set) == 0:
+            merged_doc_set = query_doc_setlist[0]
+        print("merged docs: ",merged_doc_set)
+        '''
         #print(len(query_word_posting))
         tf_idf_thing = tf_idf(query_word_posting)
         td_dict_list = tf_idf_thing[0]
         query_vector = normalize(tf_idf_thing[1])
         d_vector_dict = makeDocumentVector(td_dict_list)
-        for doc_vector in d_vector_dict.values():
+        for id, doc_vector in d_vector_dict.items():
             doc_vector = normalize(doc_vector)
+            d_vector_dict[id] = doc_vector
         cosine_vector = cosine_sim(query_vector, d_vector_dict)
-        d = sort_my_dict(cosine_vector, 5)
+        #print(cosine_vector)
+
+        cosine_vector_keys = set(int(i) for i in cosine_vector.keys())
+        final_doc_set = merged_doc_set.intersection(cosine_vector_keys)
+        new_cos_vector = dict()
+        for id in final_doc_set:
+            new_cos_vector[id] = cosine_vector[str(id)]
+        print("final dict: ", new_cos_vector)
+
+        d = sort_my_dict(new_cos_vector, 5)
 
         URL = findURL(d, "./FileOutput/urls.txt")
 
@@ -326,29 +381,3 @@ if __name__ == "__main__":
             if (i < 5):
                 print(u, "\n")
             i += 1
-
-
-    '''
-    while True:
-        qList = searcher.readSearchQuery()
-    
-        print("\n")
-        starttime = time.time()
-        a = searcher.final_search_file("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt", qList)
-        
-        d = list(searcher.match_exact_word(a[0], a[1], qList))
-        URL = findURL(d, "./FileOutput/urls.txt", 5)
-        
-        
-        endtime = time.time()-starttime
-        print("------------\nTotal = ", endtime)
-
-        i = 0
-        print("\n************  SEARCH RESULTS   ************* \n\n")
-        for u in URL:
-            if (i < 5):
-                print(u, "\n")
-            i+=1
-            
-    '''
-        
