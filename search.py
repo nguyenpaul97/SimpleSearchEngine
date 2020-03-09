@@ -105,12 +105,15 @@ def tf_idf(query_word_posting):
 
         doc_id_index = 1
         tf_index = 2
+        weight_index = 3
         df = (len(q) - 1) // 3
 
         while doc_id_index < len(q):
             tf = int(q[tf_index])
+            weight = int(q[weight_index])
+            
 
-            token_document_dict[q[doc_id_index]] = [(1 + math.log(tf)) * math.log(N / df)]
+            token_document_dict[q[doc_id_index]] = [(1 + math.log(tf)) * math.log(N / df)] + weight
 
             doc_id_index += 3
             tf_index += 3
