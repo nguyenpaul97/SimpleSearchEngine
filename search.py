@@ -117,6 +117,7 @@ def tf_idf(query_word_posting):
 
             doc_id_index += 3
             tf_index += 3
+            weight_index += 3
 
         td_dict_list.append(token_document_dict)
         query_vector.append(math.log(N / df))
