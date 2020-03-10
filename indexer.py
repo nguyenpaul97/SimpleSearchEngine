@@ -50,8 +50,9 @@ class Indexer:
             print(self.doc_count)
             print(self.doc_num)
             print(len(self.unique_count))
-            with open("./FileOutput/urls.txt", "w") as url_txt:
-                url_txt.write(str(self.url_dict))
+            with open("./FileOutput/urls1.json", "w") as url_txt:
+                js.dump(self.url_dict, url_txt)
+                #url_txt.write(str(self.url_dict))
             with open("./FileOutput/report.txt", "w+") as f:
                 f.write("number of documents: "+str(self.doc_num)+"\n")
                 f.write("number of unique tokens: " + str(len(self.unique_count)))
@@ -290,6 +291,7 @@ if __name__ == "__main__":
     #merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
     #merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
     #merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+    '''
     count = 78385471
     final_marg = open("./FileOutput/finalmerged.txt", "r")
     end = 89921610
@@ -302,6 +304,23 @@ if __name__ == "__main__":
         print(line)
         count += len(line)
     final_marg.close()
+    '''
+    # url_dict = dict()
+    # docnum = 0
+    # if os.path.exists('DEV'):
+    #     for path in os.listdir('DEV'):
+    #         for json_file in os.listdir('DEV/' + path):
+    #             # load json
+    #             json_path = 'DEV/' + path + '/' + json_file
+    #             #print(json_path)
+    #             with open(json_path, 'r') as jfile:
+    #                 with Timeout(5, False):
+    #                     data = js.load(jfile)
+    #                     url = data['url']
+    #             url_dict[docnum] = url
+    #             docnum += 1
+    # with open("./FileOutput/urls1.json", "w") as url_txt:
+    #     js.dump(url_dict, url_txt)
 
 
 

@@ -5,6 +5,7 @@ import re
 import math
 import threading
 import queue
+import json
 lock = threading.Lock()
 N = 55000
 stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't",
@@ -42,6 +43,11 @@ class search:
             # add this to a list of pookkeeping
             lst = data.split()
         return lst
+
+    def load_urls(self, urlPath):
+        with open(urlPath, "r") as urlfile:
+            url = json.load(urlfile)
+        return url
 
 '''
 def match_exact_word(documents, keyList, word, queue):
@@ -165,7 +171,7 @@ def makeDocumentVector(td_dict_list):
         thread.start()
     for thread in th_list:
         thread.join()
-    thread_list.clear()
+    #thread_list.clear()
 
     '''
     add_vectors_to_td_list(total_dict, td_dict_list)
@@ -222,25 +228,44 @@ def BinSearch(a, x):
 
 def findURL(docIDResults, URLFile):
     #print("in find URL")
-    read_file = open(URLFile, "r")
-    dictionary = read_file.read()
-
+    # read_file = open(URLFile, "r")
+    # dictionary = json.loads(read_file)
+    # read_file.close()
     URL = []
     #start = time.time()
-    dictionaryList = dictionary.split()
+    #dictionaryList = dictionary.split()
 
     for d in docIDResults:
-        URL.append(dictionaryList[int(d) * 2 + 1])
+        #print(d)
+        URL.append(URLFile[str(d)])
+        #URL.append(dictionaryList[int(d) * 2 + 1])
 
     #print("End find URL", time.time() - start, "\n")
     return URL
 
 
 def add_dups(docIDList):
-    merged_list = set.intersection(*docIDList)
+   # merged_list = set.intersection(*docIDList)
+
+    setlist_ind = 1
+    merged_list = set()
+    while setlist_ind < len(docIDList):
+        if len(merged_list) == 0:
+            merged_list = docIDList[setlist_ind - 1].intersection(docIDList[setlist_ind])
+            setlist_ind += 1
+        else:
+            merged_list = merged_list.intersection(docIDList[setlist_ind])
+            setlist_ind += 1
+
     if len(merged_list) == 0:
         merged_list = docIDList[0]
     return merged_list
+
+
+def intersect_sets(set1, set2):
+    if len(set1) == 0:
+        return set2
+    return set1.intersection(set2)
 
 
 def calculate_tfidf_cosine(word_posting_list):
@@ -277,13 +302,11 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
         #documents = []
         #keyList = []
         #documentIDList = []
+
         while count < end:
             line = final_marg.readline()
             if line == "":
                 break
-
-            # print(line)
-            count += len(line)
 
             #print(line)
             if line[:sizeWord] == word:
@@ -300,6 +323,9 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
                 #print("done with final search", time.time() - startTime, "\n")
                 return (line.strip(), doc_set)
 
+            count += len(line)
+
+
     print("cannot find word ", word, "\n")
     #lock.release()
     return "", set()
@@ -311,6 +337,8 @@ if __name__ == "__main__":
     print("Enter nothing to quit")
     searcher = search()
     book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
+    url_file = searcher.load_urls("./FileOutput/urls1.json")
+    print(type(url_file))
     while(True):
         query = input("search query : ")
         if query == "":
@@ -332,7 +360,7 @@ if __name__ == "__main__":
         for thread in thread_list:
             thread.join()
 
-        thread_list.clear()
+        #thread_list.clear()
 
         query_word_posting = []
         query_doc_setlist = []
@@ -342,6 +370,7 @@ if __name__ == "__main__":
             #print(posting)
             query_word_posting.append(posting[0])
             query_doc_setlist.append(posting[1])
+           # query_doc_setlist = intersect_sets(query_doc_setlist,posting[1])
 
         if len(query_word_posting) == 0:
             print("No valid tokens, please try again")
@@ -359,7 +388,9 @@ if __name__ == "__main__":
             new_cos_vector[id] = cosine_vector[str(id)]
 
         d = sort_my_dict(new_cos_vector, 5)
-        URL = findURL(d, "./FileOutput/urls.txt")
+        l = time.time()
+        URL = findURL(d, url_file)
+        print(time.time() - l)
         endtime = time.time() - starttime
         print("------------\nTotal Time Elapsed = ", endtime)
 
