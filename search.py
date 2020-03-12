@@ -21,8 +21,8 @@ class search:
         for q in query:
             if not q.isdigit():
                 queryList.append(self.stemmer.stem(q.lower()))
+        queryList.sort()
         print(queryList)
-
         return queryList
 
     def tokenizer(self, text: "str") -> list:
@@ -332,13 +332,11 @@ def final_search_file(bookkeeping, finalMerge, word, queue) -> tuple:
 
 
 if __name__ == "__main__":
-    searchQueries = ['master of electrical engineering', 'Computer Science', 'uci artificial intelligence and machine learning',
-                     '']
     print("Enter nothing to quit")
     searcher = search()
     book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
     url_file = searcher.load_urls("./FileOutput/urls1.json")
-    print(type(url_file))
+
     while(True):
         query = input("search query : ")
         if query == "":
@@ -348,7 +346,6 @@ if __name__ == "__main__":
         if len(qList) == 0:
             print("No valid query tokens. Could not find any results. Try again.")
             continue
-        qList.sort()
 
         que = queue.Queue()
         thread_list = []
@@ -360,7 +357,7 @@ if __name__ == "__main__":
         for thread in thread_list:
             thread.join()
 
-        #thread_list.clear()
+        thread_list.clear()
 
         query_word_posting = []
         query_doc_setlist = []
@@ -388,9 +385,7 @@ if __name__ == "__main__":
             new_cos_vector[id] = cosine_vector[str(id)]
 
         d = sort_my_dict(new_cos_vector, 5)
-        l = time.time()
         URL = findURL(d, url_file)
-        print(time.time() - l)
         endtime = time.time() - starttime
         print("------------\nTotal Time Elapsed = ", endtime)
 

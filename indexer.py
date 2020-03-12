@@ -9,11 +9,11 @@ import re
 from eventlet.timeout import Timeout
 
 
-INDEX_SIZE = 100
+INDEX_SIZE = 10000
 
 class Indexer:
 
-    def __init__(self):
+    def __init__(self, exact_list, near_dup_list):
         # Posting structure: {token: {doc index #: [tf, importance of token]
         self.posting_dict = dict()
         self.url_dict = dict()
@@ -23,6 +23,10 @@ class Indexer:
         # https://stackoverflow.com/questions/15547409/how-to-get-rid-of-punctuation-using-nltk-tokenizer
         self.tokenizer = RegexpTokenizer(r'\w+')
         self.stemmer = PorterStemmer()
+
+        self.exact_list = exact_list
+        self.near_dups = near_dup_list
+        self.list_dup_urls = []
 
         # for M1 report
         self.doc_count = 0
@@ -37,11 +41,20 @@ class Indexer:
                     json_path = 'DEV/'+path+'/'+json_file
                     print(json_path)
                     with open(json_path, 'r') as jfile:
-                        with Timeout(5, False):
-                            data = js.load(jfile)
-                            url = data['url']
-                            self.url_dict[self.doc_num] = url
-                            self.parse_html(self.doc_num, data['content'])
+                        #with Timeout(5, False):
+                        data = js.load(jfile)
+                        url = data['url']
+                        if url in self.near_dups:
+                            continue
+                        else:
+                            for dup_lst in self.exact_list:
+                                if url in dup_lst:
+                                    self.near_dups.append(dup_lst)
+                                    self.exact_list.remove(dup_lst)
+                                    break
+
+                        self.url_dict[self.doc_num] = url
+                        self.parse_html(self.doc_num, data['content'])
                     self.doc_num += 1
                     if self.doc_num % INDEX_SIZE == 0:
                         self.writeIndexToFile()
@@ -280,6 +293,19 @@ def tokenizer(text : "str") -> list:
     data = re.split('[^a-z0-9]+',text.lower())
     data = list(filter(None, data))
     return data
+
+
+def run_indexer(exact_list, near_dup_list):
+    indexer = Indexer()
+    indexer.indexer_main()
+    makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
+
+    merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
+    merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
+    merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
+    merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
+    merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+
 
 if __name__ == "__main__":
     # indexer = Indexer()
