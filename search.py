@@ -336,6 +336,7 @@ if __name__ == "__main__":
     searcher = search()
     book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
     url_file = searcher.load_urls("./FileOutput/urls1.json")
+    N = len(url_file)
 
     while(True):
         query = input("search query : ")
