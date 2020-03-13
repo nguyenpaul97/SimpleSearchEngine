@@ -149,6 +149,8 @@ def sim_hash():
                     hash_total += str(0)
                 else:
                     hash_total += str(1)
+            if hash_total == '':
+                continue
             hash_byte = turn_byte(int(hash_total))
                     #turn the total to binary
                     # than turn them into hashValue
