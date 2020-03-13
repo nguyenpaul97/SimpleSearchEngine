@@ -15,6 +15,7 @@ import binascii
 from bitarray import bitarray
 import indexer
 
+from nltk import ngrams
 # need to remove the stop words and add stemmer
 #Anyone know a good liberary to use stemmer
 
@@ -198,6 +199,42 @@ def find_nearly_dup(near : dict) -> list:
     """ for i in lst:
         print(i) """
     return lst
+
+def n_gram() -> dict:
+    hash_dict = dict()
+    for x in list_paths:
+        if x == None:
+            continue
+        else:    
+            with open(x,"rb") as f:
+                d = json.load(f)
+                url =d["url"]
+            content1 = d["content"]
+            soup = bs.BeautifulSoup(content1,'lxml')
+            title =""
+            if (soup.title is not None and soup.title.string is not None):     
+                title = soup.title.string.strip()
+            newContent = ""
+            for para in soup.find_all('p'):
+                newContent += str(para.text)
+            newContent = title + newContent
+            lst = tokenizer(newContent)
+           
+            
+            n = 3
+            t_gram = ngrams(lst,n)
+            url_list = []
+            total = 0
+            for token in t_gram:
+                for s in token:
+                    for t in s:
+                        total += ord(t)
+                url_list.append(total)
+            hash_list = []
+            for i in range(0,len(url_list),2):
+                hash_list.append(url_list[i])
+            hash_dict[url] = hash_list  
+    return hash_dict
 
 
 """ 
