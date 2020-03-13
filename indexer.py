@@ -39,7 +39,7 @@ class Indexer:
                 for json_file in os.listdir('DEV/'+path):
                     # load json
                     json_path = 'DEV/'+path+'/'+json_file
-                    print(json_path)
+                   # print(json_path)
                     with open(json_path, 'r') as jfile:
                         #with Timeout(5, False):
                         data = js.load(jfile)
@@ -50,7 +50,7 @@ class Indexer:
                         else:
                             for dup_lst in self.exact_list:
                                 if url in dup_lst:
-                                    self.near_dups.append(dup_lst)
+                                    self.near_dups.extend(dup_lst)
                                     self.exact_list.remove(dup_lst)
                                     break
 
@@ -77,17 +77,6 @@ class Indexer:
 
     def writeIndexToFile(self):
         print("writing index to file", self.fileId)
-        # for token in self.posting_dict:
-        #     #print(token)
-        #     # print(self.posting_dict[token][1])
-        #     # print(self.posting_dict[token][2])
-        #     df = len(self.posting_dict[token])
-        #     for doc in self.posting_dict[token]:
-        #         tf = self.posting_dict[token][doc][0]
-        #         # Calculate tf-idf for that term inside of the document
-        #         self.posting_dict[token][doc][2] = tf * math.log10(self.doc_count / df)
-
-
         self.posting_dict = OrderedDict(sorted(self.posting_dict.items()))
         #json = js.dumps(self.posting_dict)
         if not os.path.exists("./FileOutput"):
@@ -181,7 +170,7 @@ def makeBookkeeping(finalMerge, bk):
 
         line = read_file.readline()
 
-        character = (line.split()[0])[0]
+        character = (line.split()[0])[2]
         bookKeeping.write(character + " " + str(count) + " ")
         newCharacter = False
         count += len(line)
@@ -195,7 +184,7 @@ def makeBookkeeping(finalMerge, bk):
 
             #print(character)
 
-            if (line.split()[0][0] != character):
+            if (line.split()[0][2] != character):
                 newCharacter = True
             else:
                 newCharacter = False
@@ -204,8 +193,8 @@ def makeBookkeeping(finalMerge, bk):
 
             if (newCharacter == True):
                 bookKeeping.write(str(count) + " ")
-                character = line.split()[0][0]
-                bookKeeping.write(line.split()[0][0] + " " + str(count) + " ")
+                character = line.split()[0][2]
+                bookKeeping.write(line.split()[0][2] + " " + str(count) + " ")
             count += len(line)
 
 
@@ -298,19 +287,21 @@ def tokenizer(text : "str") -> list:
 def run_indexer(exact_list, near_dup_list):
     indexer = Indexer(exact_list, near_dup_list)
     indexer.indexer_main()
-    makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
     merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
-    merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")
-    merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
-    merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
-    merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+    merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/finalmerged.txt")
+    #merge("./FileOutput/mergedict1.txt", "./FileOutput/dict4.txt", "./FileOutput/mergedict2.txt")
+    #merge("./FileOutput/mergedict2.txt", "./FileOutput/dict5.txt", "./FileOutput/mergedict3.txt")
+    #merge("./FileOutput/mergedict3.txt", "./FileOutput/dict6.txt", "./FileOutput/finalmerged.txt")
+
+    makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
+    print("finished indexer")
 
 
 if __name__ == "__main__":
-    indexer = Indexer(0,0)
-    indexer.indexer_main()
-    #makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
+    #indexer = Indexer(0,0)
+    #indexer.indexer_main()
+    makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
     #merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
     #merge("./FileOutput/mergedict.txt", "./FileOutput/dict3.txt", "./FileOutput/mergedict1.txt")

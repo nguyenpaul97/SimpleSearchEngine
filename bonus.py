@@ -132,7 +132,7 @@ def sim_hash():
                     total += ord(letter)
                 byte_re = turn_byte(total)
                 another_dic[token] = byte_re
-            
+
             for i in range(0,8):
                 value = 0
                 vect_list = []
@@ -258,6 +258,7 @@ else:
 
 if __name__ == "__main__":
     # 1 - add the folder path here
+    print("starting bonus")
     p = Path('./DEV')
 
     # get a list of path
@@ -275,4 +276,12 @@ if __name__ == "__main__":
 
 
     # 4 - run the index builder with 2 additional parameter index_b(.., exact_list, near_dup_list)
+    print("bonus end")
+
+    with open('./FileOutput/exactlist.txt', 'w') as exact:
+        exact.write(str(exact_list))
+    with open('./FileOutput/nearduplist.txt', 'w') as near:
+        near.write(str(near_dup_list))
+
+    print("starting indexer")
     indexer.run_indexer(exact_list, near_dup_list)
