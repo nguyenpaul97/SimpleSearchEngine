@@ -46,8 +46,8 @@ class search:
 
     def load_urls(self, urlPath):
         with open(urlPath, "r") as urlfile:
-            url = json.load(urlfile)
-        return url
+            url = urlfile.read()
+        return eval(url)
 
 '''
 def match_exact_word(documents, keyList, word, queue):
@@ -115,10 +115,10 @@ def tf_idf(word_posting):
     return td_dict_list, query_vector
 
 
-def sort_my_dict(d, limit):
+def sort_my_dict(my_d, limit):
     i = 0
     results = []
-    for k in sorted(d, key=d.get, reverse=False):
+    for k in sorted(my_d, key=my_d.get, reverse=False):
         if (i < limit):
             results.append(k)
         else:
@@ -235,9 +235,8 @@ def findURL(docIDResults, URLFile):
     #start = time.time()
     #dictionaryList = dictionary.split()
 
-    for d in docIDResults:
-        #print(d)
-        URL.append(URLFile[str(d)])
+    for id in docIDResults:
+        URL.append(URLFile[id])
         #URL.append(dictionaryList[int(d) * 2 + 1])
 
     #print("End find URL", time.time() - start, "\n")
@@ -245,8 +244,8 @@ def findURL(docIDResults, URLFile):
 
 
 def add_dups(docIDList):
-   # merged_list = set.intersection(*docIDList)
-
+    merged_list = set.intersection(*docIDList)
+    '''
     setlist_ind = 1
     merged_list = set()
     while setlist_ind < len(docIDList):
@@ -259,6 +258,7 @@ def add_dups(docIDList):
 
     if len(merged_list) == 0:
         merged_list = docIDList[0]
+    '''
     return merged_list
 
 
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     print("Enter nothing to quit")
     searcher = search()
     book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
-    url_file = searcher.load_urls("./FileOutput/urls1.json")
+    url_file = searcher.load_urls("./FileOutput/urls.txt")
     N = len(url_file)
 
     while(True):
@@ -375,16 +375,13 @@ if __name__ == "__main__":
             continue
 
         merged_doc_set = add_dups(query_doc_setlist)
-
         cosine_vector = calculate_tfidf_cosine(query_word_posting)
         #print(len(query_word_posting))
-
         cosine_vector_keys = set(int(i) for i in cosine_vector.keys())
         final_doc_set = merged_doc_set.intersection(cosine_vector_keys)
         new_cos_vector = dict()
         for id in final_doc_set:
             new_cos_vector[id] = cosine_vector[str(id)]
-
         d = sort_my_dict(new_cos_vector, 5)
         URL = findURL(d, url_file)
         endtime = time.time() - starttime

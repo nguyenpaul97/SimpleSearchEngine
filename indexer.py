@@ -44,6 +44,7 @@ class Indexer:
                         #with Timeout(5, False):
                         data = js.load(jfile)
                         url = data['url']
+
                         if url in self.near_dups:
                             continue
                         else:
@@ -63,9 +64,8 @@ class Indexer:
             print(self.doc_count)
             print(self.doc_num)
             print(len(self.unique_count))
-            with open("./FileOutput/urls1.json", "w") as url_txt:
-                js.dump(self.url_dict, url_txt)
-                #url_txt.write(str(self.url_dict))
+            with open("./FileOutput/urls.txt", "w") as url_txt:
+                url_txt.write(str(self.url_dict))
             with open("./FileOutput/report.txt", "w+") as f:
                 f.write("number of documents: "+str(self.doc_num)+"\n")
                 f.write("number of unique tokens: " + str(len(self.unique_count)))
@@ -296,7 +296,7 @@ def tokenizer(text : "str") -> list:
 
 
 def run_indexer(exact_list, near_dup_list):
-    indexer = Indexer()
+    indexer = Indexer(exact_list, near_dup_list)
     indexer.indexer_main()
     makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
@@ -308,8 +308,8 @@ def run_indexer(exact_list, near_dup_list):
 
 
 if __name__ == "__main__":
-    # indexer = Indexer()
-    # indexer.indexer_main()
+    indexer = Indexer(0,0)
+    indexer.indexer_main()
     #makeBookkeeping("./FileOutput/finalmerged.txt", "./FileOutput/bookkeeping.txt")
 
     #merge("./FileOutput/dict1.txt", "./FileOutput/dict2.txt", "./FileOutput/mergedict.txt")
@@ -331,22 +331,6 @@ if __name__ == "__main__":
         count += len(line)
     final_marg.close()
     '''
-    # url_dict = dict()
-    # docnum = 0
-    # if os.path.exists('DEV'):
-    #     for path in os.listdir('DEV'):
-    #         for json_file in os.listdir('DEV/' + path):
-    #             # load json
-    #             json_path = 'DEV/' + path + '/' + json_file
-    #             #print(json_path)
-    #             with open(json_path, 'r') as jfile:
-    #                 with Timeout(5, False):
-    #                     data = js.load(jfile)
-    #                     url = data['url']
-    #             url_dict[docnum] = url
-    #             docnum += 1
-    # with open("./FileOutput/urls1.json", "w") as url_txt:
-    #     js.dump(url_dict, url_txt)
 
 
 
