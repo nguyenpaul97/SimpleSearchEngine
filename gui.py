@@ -75,7 +75,7 @@ class MainSearchWindow(QDialog):
         for id in final_doc_set:
             new_cos_vector[id] = cosine_vector[str(id)]
 
-        d = self.searcher.sort_my_dict(new_cos_vector, 5)
+        d = self.searcher.sort_my_dict(new_cos_vector, 10)
         URL = self.searcher.findURL(d, self.url_file)
         endtime = time.time() - starttime
         total_time = "Total Time Elapsed = " + str(endtime)

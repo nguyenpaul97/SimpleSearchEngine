@@ -244,7 +244,7 @@ class search:
 
     def calculate_tfidf_cosine(self, word_posting_list):
         tf_idf_thing = self.tf_idf(word_posting_list)
-        td_dict_list = self.tf_idf_thing[0]
+        td_dict_list = tf_idf_thing[0]
         query_vector = self.normalize(tf_idf_thing[1])
         d_vector_dict = self.makeDocumentVector(td_dict_list)
         for id, doc_vector in d_vector_dict.items():
@@ -308,7 +308,7 @@ class search:
 if __name__ == "__main__":
     print("Enter nothing to quit")
     searcher = search()
-    book = searcher.create_bookeeper("./FileOutput/bookkeeping(1).txt")
+    book = searcher.create_bookeeper("./FileOutput/bookkeeping.txt")
     url_file = searcher.load_urls("./FileOutput/urls.txt")
     N = len(url_file)
 
@@ -325,7 +325,7 @@ if __name__ == "__main__":
         que = queue.Queue()
         thread_list = []
         for word in qList:
-            thread = threading.Thread(target=searcher.final_search_file, args=(book, "./FileOutput/finalmerged(1).txt",word,que))
+            thread = threading.Thread(target=searcher.final_search_file, args=(book, "./FileOutput/finalmerged.txt",word,que))
             thread_list.append(thread)
         for thread in thread_list:
             thread.start()
@@ -356,7 +356,8 @@ if __name__ == "__main__":
         new_cos_vector = dict()
         for id in final_doc_set:
             new_cos_vector[id] = cosine_vector[str(id)]
-        d = searcher.sort_my_dict(new_cos_vector, 5)
+        d = searcher.sort_my_dict(new_cos_vector, 10)
+        print("d:", d)
         URL = searcher.findURL(d, url_file)
         endtime = time.time() - starttime
         print("------------\nTotal Time Elapsed = ", endtime)
